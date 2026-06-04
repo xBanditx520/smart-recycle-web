@@ -1,11 +1,13 @@
-export type RecycleLabel = 'recyclable' | 'non-recyclable';
+export type RecycleLabel = string;
 
 export interface PredictionResult {
   label: RecycleLabel;
   confidence: number;
-  probabilities: [number, number];
+  probabilities: number[];
   rawScores: number[];
   inferenceMs: number;
+  classLabels?: string[];
+  topClasses?: Array<{ label: string; confidence: number }>;
 }
 
 export interface PredictionRecord extends PredictionResult {
@@ -13,6 +15,8 @@ export interface PredictionRecord extends PredictionResult {
   fileName: string;
   previewUrl: string;
   createdAt: string;
+  source?: 'upload' | 'camera';
+  modelVersion?: string;
 }
 
 export interface ModelInfo {
@@ -21,3 +25,4 @@ export interface ModelInfo {
   outputName: string;
   layout: 'nchw' | 'nhwc';
 }
+

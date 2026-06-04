@@ -10,17 +10,16 @@ A React + Vite FYP project for recyclable waste classification with real browser
 
 ## Why ONNX Runtime Web
 
-- Stable for browser-side inference and easy to deploy with Vite
-- Works well for a binary classifier that outputs two probabilities
-- Lets you host the model locally or via a static URL without a backend
+- Runs ONNX models directly in the browser with no backend
+- Fits the binary classifier output pattern (2 values)
+- Simple deployment by hosting the model in `public/` or a static URL
 
 ## Project structure
 
 ```text
 smart-recycle-web/
   public/
-    models/
-      recycle-classifier.onnx
+    waste_model.onnx
   src/
     components/
     constants/
@@ -35,22 +34,11 @@ smart-recycle-web/
 ## Model format and loading
 
 - Supported for this app: `.onnx`
-- Local file path: `public/models/recycle-classifier.onnx`
-- Hosted file: set `VITE_MODEL_URL=https://your-host/model.onnx`
+- Local file path: `public/waste_model.onnx`
+- Hosted file: set `VITE_MODEL_URL=https://your-host/waste_model.onnx`
 - Input requirements: RGB, 224x224, ImageNet mean/std normalization
 - Output requirements: 2 values where index 0 = non-recyclable and index 1 = recyclable
 
-## If your source model is `.tflite`
-
-A `.tflite` file cannot be used directly in this web app.
-
-Recommended conversion path:
-
-1. Convert the TensorFlow Lite model to TensorFlow SavedModel or TensorFlow Keras format if possible.
-2. Export to ONNX with a conversion tool such as `tf2onnx`, or export a TensorFlow model and convert to TensorFlow.js graph model.
-3. Place the resulting `.onnx` file in `public/models/` or host it on a static URL.
-
-If your training pipeline only outputs `.tflite`, convert outside the web app first. The browser runtime here expects ONNX for the most stable flow.
 
 ## Run locally
 
@@ -67,6 +55,28 @@ If your training pipeline only outputs `.tflite`, convert outside the web app fi
    ```
 
 3. Open the app, go to the Recognize page, upload an image, and click Recognize.
+
+## Deployment
+
+### Vercel
+
+1. Push this repo to GitHub.
+2. Import the repo in Vercel.
+3. Set build command to `npm run build` and output to `dist`.
+4. Add environment variables if needed (see `.env.example`).
+
+### Netlify
+
+1. Push this repo to GitHub.
+2. Create a new site in Netlify from the repo.
+3. Build command: `npm run build`
+4. Publish directory: `dist`
+5. Add environment variables if needed (see `.env.example`).
+
+## Optional access control
+
+Set `VITE_ACCESS_CODE` in your environment to enable a simple client-side access gate.
+This is meant for demo protection only and should not be treated as secure authentication.
 
 ## MVP validation checklist
 

@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import ModelStatusCard from '../components/ModelStatusCard';
 
 const highlights = [
   {
@@ -16,10 +18,17 @@ const highlights = [
 ] as const;
 
 export default function HomePage() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <section className="hero-grid">
       <div className="hero-copy">
-        <p className="eyebrow">Final Year Project</p>
+        <div className="hero-top">
+          <p className="eyebrow">Final Year Project</p>
+          <button className="icon-button" type="button" onClick={() => setIsSettingsOpen(true)} aria-label="Open settings">
+            ⚙️
+          </button>
+        </div>
         <h2>Smart Recycle Web App</h2>
         <p className="hero-text">
           Upload a waste image or take a photo, then classify it into recyclable or non-recyclable with real model
@@ -30,8 +39,8 @@ export default function HomePage() {
           <Link to="/recognize" className="primary-button">
             Start Recognizing
           </Link>
-          <Link to="/about" className="secondary-button">
-            View Model Flow
+          <Link to="/history" className="secondary-button">
+            View history
           </Link>
         </div>
 
@@ -67,6 +76,23 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {isSettingsOpen ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => setIsSettingsOpen(false)}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <p className="section-label">Settings</p>
+                <h3>Model details</h3>
+              </div>
+              <button className="secondary-button" type="button" onClick={() => setIsSettingsOpen(false)}>
+                Close
+              </button>
+            </div>
+            <ModelStatusCard />
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -3,9 +3,11 @@ import type { PredictionRecord } from '../types/recycle';
 interface HistoryListProps {
   records: PredictionRecord[];
   onClear: () => void;
+  onSelect: (record: PredictionRecord) => void;
+  onDelete: (recordId: string) => void;
 }
 
-export default function HistoryList({ records, onClear }: HistoryListProps) {
+export default function HistoryList({ records, onClear, onSelect, onDelete }: HistoryListProps) {
   return (
     <section className="history-panel">
       <div className="section-head">
@@ -13,9 +15,11 @@ export default function HistoryList({ records, onClear }: HistoryListProps) {
           <p className="section-label">History</p>
           <h3>Recent predictions</h3>
         </div>
-        <button className="secondary-button" type="button" onClick={onClear} disabled={records.length === 0}>
-          Clear
-        </button>
+        <div className="history-actions">
+          <button className="secondary-button" type="button" onClick={onClear} disabled={records.length === 0}>
+            Clear
+          </button>
+        </div>
       </div>
 
       {records.length === 0 ? (
@@ -26,9 +30,23 @@ export default function HistoryList({ records, onClear }: HistoryListProps) {
             <li key={record.id} className="history-item">
               <img src={record.previewUrl} alt={record.fileName} />
               <div>
-                <strong>{record.label === 'recyclable' ? 'Recyclable' : 'Non-recyclable'}</strong>
+                <strong>
+                  {record.label === 'recyclable'
+                    ? 'Recyclable'
+                    : record.label === 'non-recyclable'
+                      ? 'Non-recyclable'
+                      : record.label}
+                </strong>
                 <span>{Math.round(record.confidence * 100)}% confidence</span>
                 <small>{new Date(record.createdAt).toLocaleString()}</small>
+                <div className="history-item-actions">
+                  <button className="secondary-button" type="button" onClick={() => onSelect(record)}>
+                    View
+                  </button>
+                  <button className="secondary-button" type="button" onClick={() => onDelete(record.id)}>
+                    Delete
+                  </button>
+                </div>
               </div>
             </li>
           ))}

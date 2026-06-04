@@ -1,12 +1,13 @@
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
-import AboutPage from './pages/AboutPage';
+import AccessGate from './components/AccessGate';
+import HistoryPage from './pages/HistoryPage';
 import HomePage from './pages/HomePage';
 import RecognitionPage from './pages/RecognitionPage';
 
-const navItems = [
+const bottomNavItems = [
   { to: '/', label: 'Home', end: true },
-  { to: '/recognize', label: 'Recognize' },
-  { to: '/about', label: 'About' }
+  { to: '/recognize', label: 'Scan' },
+  { to: '/history', label: 'History' }
 ] as const;
 
 export default function App() {
@@ -21,28 +22,31 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="topnav" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
       </header>
 
       <main className="page-shell">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/recognize" element={<RecognitionPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AccessGate>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/recognize" element={<RecognitionPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AccessGate>
       </main>
+
+      <nav className="bottom-nav" aria-label="Bottom navigation">
+        {bottomNavItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) => (isActive ? 'bottom-link active' : 'bottom-link')}
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

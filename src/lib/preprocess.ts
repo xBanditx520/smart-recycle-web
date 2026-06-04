@@ -21,7 +21,7 @@ function getImageElement(file: File) {
 function buildTensorData(imageData: ImageData, layout: ModelInfo['layout']) {
   const { data } = imageData;
   const channelSize = IMAGE_SIZE * IMAGE_SIZE;
-  const output = new Float32Array(layout === 'nchw' ? 3 * channelSize : 3 * channelSize);
+  const output = new Float32Array(3 * channelSize);
 
   for (let i = 0; i < channelSize; i += 1) {
     const pixelIndex = i * 4;

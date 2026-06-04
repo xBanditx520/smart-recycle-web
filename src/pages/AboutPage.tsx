@@ -44,13 +44,10 @@ export default function AboutPage() {
       <article className="flow-card">
         <h3>Model file loading</h3>
         <p>
-          Place the ONNX model in <strong>public/models/recycle-classifier.onnx</strong> for local hosting, or set an
-          absolute URL through <strong>VITE_MODEL_URL</strong> for hosted deployment.
+          Place the ONNX model in <strong>public/waste_model.onnx</strong> for local hosting, or set an absolute URL through
+          <strong>VITE_MODEL_URL</strong> for hosted deployment.
         </p>
-        <p>
-          If your source model is <strong>.tflite</strong>, it cannot run directly in this web app. Convert it first to
-          ONNX or TensorFlow.js Graph Model before use in the browser.
-        </p>
+        <p>The app loads the model directly in the browser using ONNX Runtime Web.</p>
       </article>
     </section>
   );

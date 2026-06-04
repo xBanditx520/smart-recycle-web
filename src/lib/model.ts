@@ -3,8 +3,12 @@ import { DEFAULT_MODEL_URL } from '../constants/recycle';
 import type { ModelInfo, PredictionResult } from '../types/recycle';
 import { preprocessImageFile } from './preprocess';
 
+export type ExecutionProvider = 'wasm' | 'webgpu';
+
 let modelPromise: Promise<ort.InferenceSession> | null = null;
 let modelInfo: ModelInfo | null = null;
+let currentProvider: ExecutionProvider | null = null;
+let currentModelUrl: string | null = null;
 
 ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
 
@@ -20,12 +24,17 @@ function getShapeList(value: ort.TensorTypeAndShapeInfo | undefined) {
   return (value?.dimensions ?? []).map((dimension) => (typeof dimension === 'number' ? dimension : -1));
 }
 
-export async function loadModel(modelUrl: string = DEFAULT_MODEL_URL) {
-  if (!modelPromise) {
+export async function loadModel(
+  modelUrl: string = DEFAULT_MODEL_URL,
+  executionProvider: ExecutionProvider = 'wasm'
+) {
+  if (!modelPromise || currentProvider !== executionProvider || currentModelUrl !== modelUrl) {
     modelPromise = ort.InferenceSession.create(modelUrl, {
-      executionProviders: ['wasm'],
+      executionProviders: [executionProvider],
       graphOptimizationLevel: 'all'
     });
+    currentProvider = executionProvider;
+    currentModelUrl = modelUrl;
   }
 
   const session = await modelPromise;
@@ -50,6 +59,17 @@ export function isModelLoaded() {
   return Boolean(modelInfo);
 }
 
+export function resetModel() {
+  modelPromise = null;
+  modelInfo = null;
+  currentProvider = null;
+  currentModelUrl = null;
+}
+
+export function getExecutionProvider() {
+  return currentProvider;
+}
+
 function softmax(values: number[]) {
   const max = Math.max(...values);
   const exponentials = values.map((value) => Math.exp(value - max));
@@ -58,19 +78,26 @@ function softmax(values: number[]) {
 }
 
 function extractScores(output: ort.Tensor) {
-  const values = Array.from(output.data as Float32Array | Float64Array | Int32Array | Uint8Array | Uint16Array | BigInt64Array | BigUint64Array);
-  if (values.length >= 2) {
-    return values.slice(0, 2).map(Number);
-  }
+  const values = Array.from(
+    output.data as Float32Array | Float64Array | Int32Array | Uint8Array | Uint16Array | BigInt64Array | BigUint64Array
+  );
   if (values.length === 1) {
     const score = Number(values[0]);
     return [1 - score, score];
   }
+  if (values.length >= 2) {
+    return values.map(Number);
+  }
   return [0, 0];
 }
 
-export async function runPrediction(file: File, modelUrl: string = DEFAULT_MODEL_URL): Promise<PredictionResult> {
-  const { session, modelInfo: loadedModelInfo } = await loadModel(modelUrl);
+export async function runPrediction(
+  file: File,
+  modelUrl: string = DEFAULT_MODEL_URL,
+  executionProvider: ExecutionProvider = 'wasm',
+  classLabels?: string[]
+): Promise<PredictionResult> {
+  const { session, modelInfo: loadedModelInfo } = await loadModel(modelUrl, executionProvider);
   const startedAt = performance.now();
   const inputTensor = await preprocessImageFile(file, loadedModelInfo);
   const feeds = { [loadedModelInfo.inputName]: inputTensor } as Record<string, ort.Tensor>;
@@ -81,16 +108,16 @@ export async function runPrediction(file: File, modelUrl: string = DEFAULT_MODEL
     throw new Error('Model output is empty.');
   }
 
-  const scores = softmax(extractScores(outputTensor));
-  const recyclableProbability = scores[1] ?? 0;
-  const nonRecyclableProbability = scores[0] ?? 0;
-  const label = recyclableProbability >= nonRecyclableProbability ? 'recyclable' : 'non-recyclable';
+  const rawScores = extractScores(outputTensor);
+  const scores = softmax(rawScores);
+  const bestIndex = scores.reduce((best, value, index) => (value > scores[best] ? index : best), 0);
+  const label = classLabels?.[bestIndex] ?? (bestIndex === 1 ? 'recyclable' : 'non-recyclable');
 
   return {
     label,
-    confidence: Math.max(recyclableProbability, nonRecyclableProbability),
-    probabilities: [nonRecyclableProbability, recyclableProbability],
-    rawScores: extractScores(outputTensor),
+    confidence: scores[bestIndex] ?? 0,
+    probabilities: scores,
+    rawScores,
     inferenceMs: performance.now() - startedAt
   };
 }

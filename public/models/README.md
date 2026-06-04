@@ -1,6 +1,6 @@
-Place your trained ONNX model here as recycle-classifier.onnx.
+Place your trained TFLite model in the project public folder.
 
 Expected file path for local development:
-public/models/recycle-classifier.onnx
+public/model.tflite
 
 You can also override the model URL with VITE_MODEL_URL.
