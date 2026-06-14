@@ -345,6 +345,7 @@ export default function RecognitionPage() {
       {result ? (
         <ResultSheet
           result={result}
+          previewUrl={previewUrl}
           onClose={handleCloseResult}
           onRetake={() => {
             setResult(null);

@@ -1,5 +1,10 @@
 export type RecycleLabel = string;
 
+export interface PredictionClassScore {
+  label: string;
+  confidence: number;
+}
+
 export interface PredictionResult {
   label: RecycleLabel;
   confidence: number;
@@ -7,7 +12,8 @@ export interface PredictionResult {
   rawScores: number[];
   inferenceMs: number;
   classLabels?: string[];
-  topClasses?: Array<{ label: string; confidence: number }>;
+  topClasses?: PredictionClassScore[];
+  isComposite?: boolean;
 }
 
 export interface PredictionRecord extends PredictionResult {

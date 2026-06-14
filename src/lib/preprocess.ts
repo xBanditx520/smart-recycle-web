@@ -18,6 +18,16 @@ function getImageElement(file: File) {
   });
 }
 
+function drawCenterCroppedImage(image: HTMLImageElement, context: CanvasRenderingContext2D) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const sourceSize = Math.min(sourceWidth, sourceHeight);
+  const sourceX = Math.floor((sourceWidth - sourceSize) / 2);
+  const sourceY = Math.floor((sourceHeight - sourceSize) / 2);
+
+  context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+}
+
 function buildTensorData(imageData: ImageData, layout: ModelInfo['layout']) {
   const { data } = imageData;
   const channelSize = IMAGE_SIZE * IMAGE_SIZE;
@@ -59,7 +69,7 @@ export async function preprocessImageFile(file: File, modelInfo: ModelInfo) {
     throw new Error('Canvas is not supported in this browser.');
   }
 
-  context.drawImage(image, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+  drawCenterCroppedImage(image, context);
   const imageData = context.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
   const tensorData = buildTensorData(imageData, modelInfo.layout);
 

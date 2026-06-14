@@ -1,6 +1,6 @@
 import * as ort from 'onnxruntime-web';
 import { DEFAULT_MODEL_URL } from '../constants/recycle';
-import type { ModelInfo, PredictionResult } from '../types/recycle';
+import type { ModelInfo, PredictionClassScore, PredictionResult } from '../types/recycle';
 import { preprocessImageFile } from './preprocess';
 
 export type ExecutionProvider = 'wasm' | 'webgpu';
@@ -91,6 +91,15 @@ function extractScores(output: ort.Tensor) {
   return [0, 0];
 }
 
+function buildRankedScores(scores: number[], classLabels?: string[]): PredictionClassScore[] {
+  return scores
+    .map((confidence, index) => ({
+      label: classLabels?.[index] ?? `Class ${index + 1}`,
+      confidence
+    }))
+    .sort((left, right) => right.confidence - left.confidence);
+}
+
 export async function runPrediction(
   file: File,
   modelUrl: string = DEFAULT_MODEL_URL,
@@ -110,14 +119,29 @@ export async function runPrediction(
 
   const rawScores = extractScores(outputTensor);
   const scores = softmax(rawScores);
-  const bestIndex = scores.reduce((best, value, index) => (value > scores[best] ? index : best), 0);
-  const label = classLabels?.[bestIndex] ?? (bestIndex === 1 ? 'recyclable' : 'non-recyclable');
+  const rankedScores = buildRankedScores(scores, classLabels);
+  const bestScore = rankedScores[0];
+  const secondScore = rankedScores[1];
+  const isAdvancedClassification = Boolean(classLabels?.length && classLabels.length > 2);
+  const isComposite = Boolean(isAdvancedClassification && secondScore && secondScore.confidence > 0.2);
+
+  const label = isAdvancedClassification
+    ? isComposite
+      ? 'Composite Item'
+      : bestScore?.label ?? 'Unknown'
+    : (scores[1] ?? 0) >= (scores[0] ?? 0)
+      ? 'recyclable'
+      : 'non-recyclable';
+
+  const topClasses = isAdvancedClassification ? rankedScores.slice(0, 2) : rankedScores.slice(0, 2);
 
   return {
     label,
-    confidence: scores[bestIndex] ?? 0,
+    confidence: bestScore?.confidence ?? 0,
     probabilities: scores,
     rawScores,
-    inferenceMs: performance.now() - startedAt
+    inferenceMs: performance.now() - startedAt,
+    topClasses,
+    isComposite
   };
 }

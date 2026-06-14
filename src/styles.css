@@ -868,6 +868,20 @@ img {
   transform: translateY(0);
 }
 
+.sheet-preview {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.sheet-preview img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
 .sheet-header {
   display: flex;
   align-items: flex-start;
@@ -913,6 +927,11 @@ img {
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.06);
+}
+
+.result-composite {
+  display: grid;
+  gap: 10px;
 }
 
 .sheet-positive .sheet-card {
