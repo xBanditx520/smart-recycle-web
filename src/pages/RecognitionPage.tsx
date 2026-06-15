@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CameraCapture from '../components/CameraCapture';
 import ResultSheet from '../components/ResultSheet';
-import { ADVANCED_MODEL_URL, DEFAULT_MODEL_URL, STORAGE_KEY } from '../constants/recycle';
+import { ADVANCED_MODEL_URL, DEFAULT_MODEL_URL } from '../constants/recycle';
+import { loadHistory, saveHistory } from '../lib/history';
 import { loadModel, resetModel, runPrediction } from '../lib/model';
 import type { PredictionRecord, PredictionResult } from '../types/recycle';
 
@@ -163,6 +164,7 @@ export default function RecognitionPage() {
     }
 
     setIsSwitchingMode(true);
+    setResult(null);
     if (modeTimerRef.current) {
       window.clearTimeout(modeTimerRef.current);
     }
@@ -215,9 +217,7 @@ export default function RecognitionPage() {
         source: source ?? 'upload',
         ...prediction
       };
-      const current = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]') as PredictionRecord[];
-      const updated = [record, ...current].slice(0, 20);
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      saveHistory([record, ...loadHistory()].slice(0, 20));
     } catch (predictionError) {
       const text = predictionError instanceof Error ? predictionError.message : 'Inference failed.';
       setError(text.includes('Invalid image') ? 'Invalid image file.' : 'Inference failed.');
@@ -301,7 +301,7 @@ export default function RecognitionPage() {
             </p>
           </div>
 
-          {isSwitchingMode ? <div className="mode-toast">⏳ 切换引擎中...</div> : null}
+          {isSwitchingMode ? <div className="mode-toast">Switching model...</div> : null}
 
           <CameraCapture
             onCapture={(capturedFile) => handleFile(capturedFile, 'camera')}

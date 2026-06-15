@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Collaboration language
+
+Conversations with the user are in **Chinese**. All code, comments, variable names, commit messages, and file content must be written in **English**.
+
 ## Commands
 
 ```bash

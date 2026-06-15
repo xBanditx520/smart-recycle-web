@@ -1,18 +1,38 @@
-import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { useSwipeable } from 'react-swipeable';
+import AboutModal from './components/AboutModal';
 import AccessGate from './components/AccessGate';
 import HistoryPage from './pages/HistoryPage';
-import HomePage from './pages/HomePage';
 import RecognitionPage from './pages/RecognitionPage';
 
-const bottomNavItems = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/recognize', label: 'Scan' },
+type NavItem = { to: string; label: string; end?: boolean };
+
+const bottomNavItems: NavItem[] = [
+  { to: '/', label: 'Scan', end: true },
   { to: '/history', label: 'History' }
-] as const;
+];
 
 export default function App() {
+  const [showAbout, setShowAbout] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (location.pathname !== '/history') navigate('/history');
+    },
+    onSwipedRight: () => {
+      if (location.pathname !== '/') navigate('/');
+    },
+    swipeDuration: 500,
+    preventScrollOnSwipe: false,
+    trackMouse: false,
+    delta: 60
+  });
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" {...swipeHandlers}>
       <header className="topbar">
         <div className="brand-lockup">
           <div className="brand-mark">SR</div>
@@ -21,15 +41,22 @@ export default function App() {
             <h1>Recycle smarter with real browser inference.</h1>
           </div>
         </div>
-
+        <button
+          className="icon-button"
+          type="button"
+          onClick={() => setShowAbout(true)}
+          aria-label="About this app"
+        >
+          ℹ
+        </button>
       </header>
 
-      <main className="page-shell">
+      <main className="page-shell" key={location.pathname}>
         <AccessGate>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/recognize" element={<RecognitionPage />} />
+            <Route path="/" element={<RecognitionPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/recognize" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AccessGate>
@@ -47,6 +74,8 @@ export default function App() {
           </NavLink>
         ))}
       </nav>
+
+      {showAbout ? <AboutModal onClose={() => setShowAbout(false)} /> : null}
     </div>
   );
 }

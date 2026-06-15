@@ -1,5 +1,5 @@
 import * as ort from 'onnxruntime-web';
-import { DEFAULT_MODEL_URL } from '../constants/recycle';
+import { COMPOSITE_THRESHOLD, DEFAULT_MODEL_URL } from '../constants/recycle';
 import type { ModelInfo, PredictionClassScore, PredictionResult } from '../types/recycle';
 import { preprocessImageFile } from './preprocess';
 
@@ -123,7 +123,7 @@ export async function runPrediction(
   const bestScore = rankedScores[0];
   const secondScore = rankedScores[1];
   const isAdvancedClassification = Boolean(classLabels?.length && classLabels.length > 2);
-  const isComposite = Boolean(isAdvancedClassification && secondScore && secondScore.confidence > 0.2);
+  const isComposite = Boolean(isAdvancedClassification && secondScore && secondScore.confidence > COMPOSITE_THRESHOLD);
 
   const label = isAdvancedClassification
     ? isComposite
