@@ -689,12 +689,17 @@ img {
 }
 
 .camera-icon {
+  min-width: 80px;
+  height: 48px;
+  padding: 0 18px;
   border: 1px solid rgba(15, 23, 42, 0.15);
-  background: #fff;
-  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 999px;
   font-weight: 600;
+  font-size: 0.88rem;
   cursor: pointer;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .camera-shutter {
@@ -993,10 +998,14 @@ img {
   place-items: center;
   padding: 24px;
   z-index: 30;
+  overflow: hidden;
 }
 
 .modal-card {
   width: min(720px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #fff;
   border-radius: 24px;
   padding: 24px;
@@ -1052,12 +1061,18 @@ img {
 
   .topbar {
     border-radius: 32px;
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    padding: 14px 18px;
   }
 
   .topnav {
     display: none;
+  }
+
+  .brand-lockup h1 {
+    font-size: 0.88rem;
+    line-height: 1.3;
+    max-width: 20ch;
   }
 }
 
@@ -1109,8 +1124,46 @@ img {
     justify-content: space-between;
   }
 
+  /* Let camera fill the full card width */
+  .camera-panel {
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .camera-shell {
+    border-radius: 16px;
+    min-height: 300px;
+  }
+
+  .camera-video {
+    aspect-ratio: 1 / 1;
+  }
+
+  .brand-lockup h1 {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+  }
+
   .recognize-actions {
     flex-direction: column;
+  }
+
+  /* Reduce vertical noise on mobile scan page */
+  .model-hint {
+    display: none;
+  }
+
+  .preview-empty {
+    min-height: 160px;
   }
 
   .modal-body {
@@ -1314,17 +1367,31 @@ img {
 
 .overlay-class-row {
   display: grid;
-  grid-template-columns: 110px 1fr 40px;
+  grid-template-columns: 128px 1fr 40px;
   align-items: center;
   gap: 10px;
   font-size: 0.9rem;
 }
 
 .overlay-class-row span {
+  display: flex;
+  flex-direction: column;
   font-weight: 600;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.recyclability-tag {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.overlay-label-text .recyclability-tag {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.45em;
+  vertical-align: middle;
 }
 
 .overlay-class-bar-track {

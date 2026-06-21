@@ -1,10 +1,3 @@
-const steps = [
-  'User uploads or captures an image.',
-  'The browser centre-crops and resizes it to 224×224, then applies ImageNet normalisation.',
-  'ONNX Runtime Web executes the MobileNetV3-Small classifier entirely in the browser (no server).',
-  'Basic mode outputs recyclable / non-recyclable probabilities. Advanced mode classifies into 10 waste categories.'
-] as const;
-
 interface AboutModalProps {
   onClose: () => void;
 }
@@ -17,14 +10,11 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div
-        className="modal-card about-modal-card"
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="modal-card about-modal-card" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <p className="section-label">About</p>
-            <h2 className="about-modal-title">Smart Recycle Web</h2>
+            <p className="section-label">Capstone Project 1 — Sunway University</p>
+            <h2 className="about-modal-title">AI-Powered Waste Classification</h2>
           </div>
           <button className="sheet-close" type="button" onClick={onClose} aria-label="Close">
             ×
@@ -32,36 +22,43 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         </div>
 
         <p className="about-modal-intro">
-          An AI-powered waste classification prototype built for Malaysian households. Upload or capture a
-          photo to find out if an item is recyclable — all processing happens locally in your browser.
+          A browser-based prototype for classifying household waste into recyclable and non-recyclable categories,
+          designed to support Malaysia's 40% recycling target. All inference runs locally — no data leaves your device.
         </p>
 
         <div className="about-info-grid">
           <div className="about-info-card">
-            <h3>Model</h3>
-            <p>MobileNetV3-Small CNN, exported to ONNX and run via ONNX Runtime Web (WASM).</p>
+            <h3>Model architecture</h3>
+            <p>MobileNetV3-Small CNN via transfer learning, exported to ONNX and run with ONNX Runtime Web (WASM).</p>
           </div>
           <div className="about-info-card">
-            <h3>Input</h3>
-            <p>RGB image, 224×224 px, normalised with ImageNet mean and standard deviation.</p>
+            <h3>Training data</h3>
+            <p>Augmented Waste Classification dataset. Techniques: random flip, rotation, colour jitter, and random crop to improve real-world generalisation.</p>
+          </div>
+          <div className="about-info-card">
+            <h3>Model input</h3>
+            <p>RGB image, 224×224 px, centre-cropped and normalised with ImageNet mean and standard deviation.</p>
+          </div>
+          <div className="about-info-card">
+            <h3>Evaluation metrics</h3>
+            <p>Accuracy, Precision, Recall, and F1 Score measured on a held-out test set under real-world conditions.</p>
           </div>
         </div>
 
         <div className="about-flow-card">
-          <h3>How it works</h3>
-          <ol className="flow-list">
-            {steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
+          <h3>Classification modes</h3>
+          <ul className="flow-list">
+            <li><strong>Basic</strong> — Binary output: recyclable or non-recyclable. Fast and suited for quick household decisions.</li>
+            <li><strong>Advanced</strong> — 10-class output: Battery, Biological, Cardboard, Clothes, Glass, Metal, Paper, Plastic, Shoes, Trash. Composite detection flags mixed-material items.</li>
+          </ul>
         </div>
 
         <div className="about-flow-card">
-          <h3>Model files</h3>
+          <h3>Sustainability alignment</h3>
           <p>
-            Place ONNX files in <strong>public/</strong> (<code>waste_model.onnx</code> for Basic,{' '}
-            <code>advanced_waste_model.onnx</code> for Advanced), or override the path via{' '}
-            <code>VITE_MODEL_URL</code> / <code>VITE_ADVANCED_MODEL_URL</code> in <code>.env</code>.
+            This project supports the <strong>Malaysian Smart City Framework</strong> and the UN Sustainable Development Goals{' '}
+            <strong>SDG 11</strong> (Sustainable Cities) and <strong>SDG 12</strong> (Responsible Consumption).
+            Stronger separation-at-source practices reduce landfill dependency and help communities reach the national recycling target.
           </p>
         </div>
 

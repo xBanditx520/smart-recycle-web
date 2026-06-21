@@ -1,36 +1,8 @@
 import { useState } from 'react';
+import { getDisposalTip, getRecyclability } from '../constants/disposal';
 import type { PredictionResult } from '../types/recycle';
 
-const DISPOSAL_TIPS: Record<string, string> = {
-  Battery:
-    'Drop at an e-waste collection point (Giant, AEON, or your local council scheduled collection). Never throw in a regular bin — batteries contain toxic heavy metals.',
-  Biological:
-    'Compost vegetable and food scraps if possible. Otherwise, seal in a bag and dispose as general waste. Never mix with recyclables.',
-  Cardboard:
-    'Flatten before placing in the blue recycling bin (tong kitar semula). Remove tape and plastic windows. Wet or heavily soiled cardboard goes to general waste.',
-  Clothes:
-    'Donate wearable items to Salvation Army, Junk Trunk, or charity bins. H&M and Uniqlo stores also accept worn clothing for recycling.',
-  Glass:
-    'Rinse clean. Glass bottles and jars are accepted at most Malaysian recycling centres. Wrap any broken glass in newspaper before disposal for safety.',
-  Metal:
-    'Rinse and crush cans before recycling. Accepted at scrap dealers and most public recycling bins. Aluminium cans have high value — always recycle.',
-  Paper:
-    'Keep dry. Remove plastic windows from envelopes. Widely accepted at blue recycling bins and scheduled kitar semula collections.',
-  Plastic:
-    'Check the resin code on the bottom. Codes 1 (PET) and 2 (HDPE) are most widely accepted in Malaysia. Rinse clean and remove caps if possible.',
-  Shoes:
-    'Donate wearable pairs to charity. Adidas and Nike stores accept worn shoes for recycling in-store. Otherwise, dispose as bulky waste.',
-  Trash:
-    'Dispose as general waste. Before discarding, check if any metal or clean plastic parts can be separated for recycling.',
-  recyclable:
-    'Place in the blue recycling bin (tong kitar semula). Ensure the item is clean and dry — contaminated recyclables end up in landfill.',
-  'non-recyclable':
-    'Dispose in the general waste bin. If unsure about an item, contact your local council (pihak berkuasa tempatan) for guidance.'
-};
-
-function getDisposalTip(label: string): string {
-  return DISPOSAL_TIPS[label] ?? 'Check with your nearest recycling centre for the correct disposal method.';
-}
+const RANK_COLORS = ['#0ea05b', '#22a6b3', '#eab308', '#f97316', '#94a3b8'];
 
 function ConfidenceRing({ value }: { value: number }) {
   const r = 40;
@@ -92,6 +64,8 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
         : 'Non-recyclable'
       : result.label;
 
+  const primaryRecyclability = !isBinary && !isComposite ? getRecyclability(result.label) : null;
+
   const disposalTip =
     isComposite && primaryClass && secondaryClass
       ? `Remove the ${secondaryClass.label.toLowerCase()} component first if possible, then handle the ${primaryClass.label.toLowerCase()} part separately. ${getDisposalTip(primaryClass.label)}`
@@ -134,7 +108,10 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
             <p className="section-label">
               {isComposite ? 'Mixed Material' : isBinary ? 'Classification' : 'Category'}
             </p>
-            <h2 className="overlay-label-text">{displayLabel}</h2>
+            <h2 className="overlay-label-text">
+              {displayLabel}
+              {primaryRecyclability ? <span className="recyclability-tag">({primaryRecyclability})</span> : null}
+            </h2>
             {isComposite && primaryClass && secondaryClass ? (
               <p className="overlay-sub">
                 {primaryClass.label} + {secondaryClass.label}
@@ -146,18 +123,25 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
 
         {!isBinary && topClasses.length > 0 ? (
           <div className="overlay-classes">
-            {topClasses.slice(0, isComposite ? 2 : 3).map((item) => (
-              <div key={item.label} className="overlay-class-row">
-                <span>{item.label}</span>
-                <div className="overlay-class-bar-track">
-                  <div
-                    className="overlay-class-bar-fill"
-                    style={{ width: `${(item.confidence * 100).toFixed(1)}%` }}
-                  />
+            {topClasses.slice(0, isComposite ? 2 : 5).map((item, index) => {
+              const recyclability = getRecyclability(item.label);
+              const color = RANK_COLORS[index] ?? RANK_COLORS[RANK_COLORS.length - 1];
+              return (
+                <div key={item.label} className="overlay-class-row">
+                  <span>
+                    {item.label}
+                    {recyclability ? <span className="recyclability-tag">({recyclability})</span> : null}
+                  </span>
+                  <div className="overlay-class-bar-track">
+                    <div
+                      className="overlay-class-bar-fill"
+                      style={{ width: `${(item.confidence * 100).toFixed(1)}%`, background: color }}
+                    />
+                  </div>
+                  <strong>{(item.confidence * 100).toFixed(0)}%</strong>
                 </div>
-                <strong>{(item.confidence * 100).toFixed(0)}%</strong>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : null}
 

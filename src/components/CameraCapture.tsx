@@ -8,27 +8,40 @@ interface CameraCaptureProps {
 }
 
 type FacingMode = 'user' | 'environment';
-
 type CameraStatus = 'idle' | 'starting' | 'active' | 'error';
 
 export default function CameraCapture({ onCapture, onError, onUploadClick, disabled = false }: CameraCaptureProps) {
   const [status, setStatus] = useState<CameraStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [facingMode, setFacingMode] = useState<FacingMode>('environment');
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const playTokenRef = useRef(0);
 
+  // Cache device IDs after first permission grant to avoid re-prompts on flip
+  const cachedDeviceIdsRef = useRef<string[]>([]);
+  const activeDeviceIndexRef = useRef(0);
+
   const isActive = status === 'active';
 
   useEffect(() => {
-    startStream(facingMode);
-
-    return () => {
-      stopStream();
-    };
+    startStream('environment');
+    return () => stopStream();
   }, []);
+
+  async function cacheDeviceIds(activeDeviceId: string) {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    const cameras = all
+      .filter((d) => d.kind === 'videoinput' && d.deviceId !== '')
+      .map((d) => d.deviceId);
+    if (cameras.length === 0) return;
+    // Put the active (back) camera first so index 0 = current
+    const others = cameras.filter((id) => id !== activeDeviceId);
+    cachedDeviceIdsRef.current = [activeDeviceId, ...others];
+    activeDeviceIndexRef.current = 0;
+  }
 
   async function startStream(mode: FacingMode) {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -42,9 +55,24 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
     playTokenRef.current = token;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: mode }
-      });
+      const hasCachedDevices = cachedDeviceIdsRef.current.length > 0;
+      const targetId = hasCachedDevices
+        ? cachedDeviceIdsRef.current[activeDeviceIndexRef.current]
+        : undefined;
+
+      const videoConstraints: MediaTrackConstraints = targetId
+        ? { deviceId: { exact: targetId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        : { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } };
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+
+      // After first successful permission grant, cache all camera device IDs.
+      // Subsequent switches use deviceId instead of facingMode, which avoids
+      // the browser re-prompting for permission on iOS/Android.
+      if (!hasCachedDevices) {
+        const activeId = stream.getVideoTracks()[0]?.getSettings().deviceId ?? '';
+        if (activeId) await cacheDeviceIds(activeId);
+      }
 
       streamRef.current = stream;
 
@@ -53,9 +81,7 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
         try {
           await videoRef.current.play();
         } catch (playError) {
-          if (playTokenRef.current !== token || streamRef.current !== stream) {
-            return;
-          }
+          if (playTokenRef.current !== token || streamRef.current !== stream) return;
           const message = playError instanceof Error ? playError.message : 'Unable to start the camera.';
           setStatus('error');
           setErrorMessage(message);
@@ -64,9 +90,7 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
         }
       }
 
-      if (playTokenRef.current === token) {
-        setStatus('active');
-      }
+      if (playTokenRef.current === token) setStatus('active');
     } catch (error) {
       setStatus('error');
       const message = error instanceof Error ? error.message : 'Unable to access the camera.';
@@ -78,15 +102,13 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
   function stopStream() {
     playTokenRef.current += 1;
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.srcObject = null;
     }
-
     setStatus('idle');
   }
 
@@ -97,6 +119,11 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
   async function handleSwitchCamera() {
     const nextMode: FacingMode = facingMode === 'environment' ? 'user' : 'environment';
     setFacingMode(nextMode);
+
+    if (cachedDeviceIdsRef.current.length > 1) {
+      activeDeviceIndexRef.current =
+        (activeDeviceIndexRef.current + 1) % cachedDeviceIdsRef.current.length;
+    }
 
     if (isActive) {
       stopStream();
@@ -138,8 +165,7 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
       return;
     }
 
-    const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
-    onCapture(file);
+    onCapture(new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' }));
   }
 
   return (
@@ -162,12 +188,7 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
       <canvas ref={canvasRef} className="camera-canvas" />
 
       <div className="camera-controls camera-controls-main">
-        <button
-          className="camera-icon"
-          type="button"
-          onClick={onUploadClick}
-          disabled={disabled}
-        >
+        <button className="camera-icon" type="button" onClick={onUploadClick} disabled={disabled}>
           Upload
         </button>
         <button

@@ -4,3 +4,15 @@ dist
 .env
 .env.local
 .vscode
+
+# Dataset files — backed up via OneDrive, do NOT commit to git
+data/
+data_classified/
+scripts/crop_valtest.mjs
+
+# Playwright screenshots
+camera-tall.png
+result-top5.png
+result-top5-full.png
+mobile-after.png
+.playwright-mcp/

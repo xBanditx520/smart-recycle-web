@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import CameraCapture from '../components/CameraCapture';
 import ResultSheet from '../components/ResultSheet';
 import { ADVANCED_MODEL_URL, DEFAULT_MODEL_URL } from '../constants/recycle';
@@ -202,7 +201,7 @@ export default function RecognitionPage() {
             confidence: value
           }))
           .sort((a, b) => b.confidence - a.confidence)
-          .slice(0, 3);
+          .slice(0, 5);
         prediction.classLabels = advancedLabels;
         prediction.topClasses = topClasses;
       }
@@ -335,9 +334,6 @@ export default function RecognitionPage() {
             <button className="primary-button" type="button" onClick={handleRecognize} disabled={!hasFile || isPredicting}>
               {isPredicting ? 'Recognizing...' : 'Recognize'}
             </button>
-            <Link to="/history" className="secondary-button">
-              View history
-            </Link>
           </div>
         </div>
       </section>

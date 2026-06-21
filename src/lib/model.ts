@@ -20,8 +20,9 @@ function getLayoutFromShape(shape: readonly number[]) {
   return 'nchw' as const;
 }
 
-function getShapeList(value: ort.TensorTypeAndShapeInfo | undefined) {
-  return (value?.dimensions ?? []).map((dimension) => (typeof dimension === 'number' ? dimension : -1));
+function getShapeList(value: unknown) {
+  const meta = value as { dimensions?: ReadonlyArray<number | bigint> } | undefined;
+  return (meta?.dimensions ?? []).map((d): number => (typeof d === 'bigint' ? -1 : d));
 }
 
 export async function loadModel(
@@ -40,7 +41,9 @@ export async function loadModel(
   const session = await modelPromise;
   const input = session.inputNames[0];
   const output = session.outputNames[0];
-  const inputShape = getShapeList(session.inputMetadata[input]);
+  // inputMetadata is not in the public ort type definitions but exists at runtime
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inputShape = getShapeList((session as any).inputMetadata?.[input]);
   modelInfo = {
     inputName: input,
     inputShape,
@@ -78,16 +81,18 @@ function softmax(values: number[]) {
 }
 
 function extractScores(output: ort.Tensor) {
-  const values = Array.from(
-    output.data as Float32Array | Float64Array | Int32Array | Uint8Array | Uint16Array | BigInt64Array | BigUint64Array
-  );
+  const { data } = output;
+  let values: number[];
+  if (data instanceof BigInt64Array || data instanceof BigUint64Array) {
+    values = Array.from(data, (v) => Number(v));
+  } else {
+    values = Array.from(data as ArrayLike<number>);
+  }
   if (values.length === 1) {
-    const score = Number(values[0]);
+    const score = values[0] ?? 0;
     return [1 - score, score];
   }
-  if (values.length >= 2) {
-    return values.map(Number);
-  }
+  if (values.length >= 2) return values;
   return [0, 0];
 }
 
