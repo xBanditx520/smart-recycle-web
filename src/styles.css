@@ -1176,6 +1176,280 @@ img {
   }
 }
 
+/* ── Model performance page ── */
+
+.model-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.model-intro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}
+
+.model-intro-text {
+  margin: 10px 0 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.model-dataset-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(14, 160, 91, 0.07);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.model-dataset-row strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.model-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.model-block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.model-block-head h3 {
+  margin: 4px 0 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+}
+
+.model-block-desc {
+  margin: 4px 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.model-mode-badge {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.model-mode-badge.basic {
+  background: rgba(14, 160, 91, 0.12);
+  color: #0a7a44;
+}
+
+.model-mode-badge.advanced {
+  background: rgba(34, 166, 179, 0.12);
+  color: #136570;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px;
+  background: rgba(14, 160, 91, 0.05);
+  border: 1px solid rgba(14, 160, 91, 0.15);
+  border-radius: 14px;
+  gap: 4px;
+}
+
+.metric-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0ea05b;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.model-card {
+  background: rgba(15, 23, 42, 0.025);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.model-card-title {
+  margin: 0 0 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.model-card-title span {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* Training curve SVG */
+.training-svg {
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Epoch table */
+.epoch-table-wrap {
+  overflow-x: auto;
+}
+
+.epoch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.epoch-table th {
+  text-align: left;
+  padding: 5px 8px;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+
+.epoch-table td {
+  padding: 5px 8px;
+  color: var(--text);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.epoch-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Per-class F1 bars */
+.class-f1-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.class-f1-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.class-f1-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.class-f1-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+}
+
+.class-f1-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.class-f1-value {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Notable confusions */
+.confusion-card {
+  border-left: 3px solid #eab308;
+}
+
+.confusion-intro {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.confusion-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confusion-row {
+  padding: 10px 12px;
+  background: rgba(234, 179, 8, 0.06);
+  border-radius: 10px;
+}
+
+.confusion-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.cf-true { color: var(--text); }
+.cf-arrow { color: var(--muted); }
+.cf-pred { color: #b45309; }
+
+.cf-count {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.cf-reason {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metric-value {
+    font-size: 1.2rem;
+  }
+}
+
 /* ── About modal ── */
 
 .about-modal-card {

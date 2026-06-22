@@ -4,13 +4,17 @@ import { useSwipeable } from 'react-swipeable';
 import AboutModal from './components/AboutModal';
 import AccessGate from './components/AccessGate';
 import HistoryPage from './pages/HistoryPage';
+import ModelPage from './pages/ModelPage';
 import RecognitionPage from './pages/RecognitionPage';
 
 type NavItem = { to: string; label: string; end?: boolean };
 
+const NAV_ROUTES = ['/', '/history', '/model'];
+
 const bottomNavItems: NavItem[] = [
   { to: '/', label: 'Scan', end: true },
-  { to: '/history', label: 'History' }
+  { to: '/history', label: 'History' },
+  { to: '/model', label: 'Model' }
 ];
 
 export default function App() {
@@ -20,10 +24,12 @@ export default function App() {
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
-      if (location.pathname !== '/history') navigate('/history');
+      const idx = NAV_ROUTES.indexOf(location.pathname);
+      if (idx >= 0 && idx < NAV_ROUTES.length - 1) navigate(NAV_ROUTES[idx + 1]);
     },
     onSwipedRight: () => {
-      if (location.pathname !== '/') navigate('/');
+      const idx = NAV_ROUTES.indexOf(location.pathname);
+      if (idx > 0) navigate(NAV_ROUTES[idx - 1]);
     },
     swipeDuration: 500,
     preventScrollOnSwipe: false,
@@ -56,6 +62,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<RecognitionPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/model" element={<ModelPage />} />
             <Route path="/recognize" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
