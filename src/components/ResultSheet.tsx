@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { getDisposalTip, getRecyclability } from '../constants/disposal';
+import { saveFeedback } from '../lib/feedback';
+import { GEMINI_AVAILABLE, analyzeWithGemini } from '../lib/gemini';
+import type { GeminiAnalysis } from '../lib/gemini';
 import type { PredictionResult } from '../types/recycle';
 
 const RANK_COLORS = ['#0ea05b', '#22a6b3', '#eab308', '#f97316', '#94a3b8'];
@@ -46,8 +49,12 @@ interface ResultSheetProps {
   onRetake: () => void;
 }
 
+type GeminiState = 'idle' | 'loading' | 'done' | 'error';
+
 export default function ResultSheet({ result, previewUrl, onClose, onRetake }: ResultSheetProps) {
   const [isClosing, setIsClosing] = useState(false);
+  const [geminiState, setGeminiState] = useState<GeminiState>('idle');
+  const [geminiResult, setGeminiResult] = useState<GeminiAnalysis | null>(null);
 
   const isBinary = result.label === 'recyclable' || result.label === 'non-recyclable';
   const isRecyclable = result.label === 'recyclable';
@@ -80,6 +87,34 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
     setIsClosing(true);
     setTimeout(onRetake, 260);
   }
+
+  async function handleAskGemini() {
+    if (!previewUrl || geminiState !== 'idle') return;
+    setGeminiState('loading');
+    try {
+      const analysis = await analyzeWithGemini(previewUrl);
+      setGeminiResult(analysis);
+      setGeminiState('done');
+      // Also save for retraining dataset
+      await saveFeedback({
+        imageUrl: previewUrl,
+        predictedLabel: result.label,
+        confidence: result.confidence,
+        mode: isBinary ? 'basic' : 'advanced',
+      }).catch(() => {});
+    } catch {
+      setGeminiState('error');
+      // Fallback: save to IndexedDB even without Gemini result
+      await saveFeedback({
+        imageUrl: previewUrl,
+        predictedLabel: result.label,
+        confidence: result.confidence,
+        mode: isBinary ? 'basic' : 'advanced',
+      }).catch(() => {});
+    }
+  }
+
+  const showGeminiButton = GEMINI_AVAILABLE && previewUrl && geminiState === 'idle';
 
   return (
     <div
@@ -148,6 +183,42 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
         <div className="disposal-card">
           <p className="section-label">Disposal Guidance</p>
           <p className="disposal-tip">{disposalTip}</p>
+        </div>
+
+        {/* Gemini AI second opinion */}
+        <div className="gemini-section">
+          {showGeminiButton ? (
+            <button className="gemini-ask-btn" type="button" onClick={handleAskGemini}>
+              Results not accurate? Ask Gemini AI →
+            </button>
+          ) : null}
+
+          {geminiState === 'loading' ? (
+            <div className="gemini-loading">
+              <span className="gemini-spinner" />
+              Analyzing with Gemini AI...
+            </div>
+          ) : null}
+
+          {geminiState === 'done' && geminiResult ? (
+            <div className="gemini-result-card">
+              <div className="gemini-result-header">
+                <span className="gemini-badge">Gemini AI</span>
+                <span className="gemini-result-label">{geminiResult.category}</span>
+                <span className="recyclability-tag">
+                  ({geminiResult.recyclable ? 'Recyclable' : 'Non-recyclable'})
+                </span>
+              </div>
+              <p className="gemini-result-reason">{geminiResult.reason}</p>
+              <span className="gemini-confidence-tag">Confidence: {geminiResult.confidence}</span>
+            </div>
+          ) : null}
+
+          {geminiState === 'error' ? (
+            <p className="gemini-error">
+              Gemini unavailable — image saved for offline review.
+            </p>
+          ) : null}
         </div>
 
         <div className="overlay-actions">

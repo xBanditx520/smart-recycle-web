@@ -207,6 +207,7 @@ export default function RecognitionPage() {
       }
       const historyPreview = await createHistoryThumbnail(file);
       setResult(prediction);
+      localStorage.setItem('sr-last-inference-ms', Math.round(prediction.inferenceMs).toString());
       setMessage(`Prediction finished in ${prediction.inferenceMs.toFixed(0)} ms.`);
       const record: PredictionRecord = {
         id: crypto.randomUUID(),

@@ -8,6 +8,7 @@ dist
 # Dataset files — backed up via OneDrive, do NOT commit to git
 data/
 data_classified/
+augmented_waste_classification/
 scripts/crop_valtest.mjs
 
 # Playwright screenshots
