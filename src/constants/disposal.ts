@@ -16,7 +16,7 @@ const DISPOSAL_TIPS: Record<string, string> = {
   Plastic:
     'Check what kind of plastic it is. Rigid plastic (bottles, containers) with resin code 1 (PET) or 2 (HDPE) goes into the blue recycling bin — rinse first and remove caps if possible. Soft plastic (bags, wrappers, cling film) is rejected by most kerbside recycling; reuse it, or look for a dedicated soft-plastic drop-off bin at major supermarkets.',
   Shoes:
-    'Wearable pairs in good condition can be donated to charity, or returned in-store at Adidas and Nike for their recycling programs. Worn-out shoes with separated soles or heavy damage cannot be donated — dispose of these as bulky waste instead.',
+    'Shoes are made from rubber, leather, textile, and adhesive composites that cannot be separated by standard recycling machinery. Donate wearable pairs in good condition to charity bins, or return them via Adidas/Nike in-store take-back programs. Heavily worn or damaged shoes should be disposed as general waste.',
   Trash:
     'Dispose as general waste. Before discarding, check if any metal or clean plastic parts can be separated for recycling.',
   recyclable:
@@ -39,7 +39,7 @@ const CLASS_RECYCLABILITY: Record<string, 'Recyclable' | 'Non-recyclable'> = {
   Metal: 'Recyclable',
   Paper: 'Recyclable',
   Plastic: 'Recyclable',
-  Shoes: 'Recyclable',
+  Shoes: 'Non-recyclable',
   Trash: 'Non-recyclable'
 };
 

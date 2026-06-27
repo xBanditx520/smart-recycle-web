@@ -622,15 +622,15 @@ img {
 
 .camera-panel {
   display: grid;
-  gap: 16px;
-  padding: 22px;
+  gap: 12px;
+  padding: 16px;
   border-radius: 24px;
   border: 1px solid var(--border);
   background: rgba(15, 23, 42, 0.03);
 }
 
 .camera-main {
-  padding: 18px;
+  padding: 16px;
 }
 
 .camera-shell {
@@ -638,8 +638,8 @@ img {
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(15, 23, 42, 0.12);
-  background: rgba(15, 23, 42, 0.05);
-  min-height: 220px;
+  background: #0f172a;
+  min-height: 240px;
 }
 
 .camera-video {
@@ -652,11 +652,12 @@ img {
 .camera-overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: grid;
   place-items: center;
   font-weight: 600;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.72);
   text-align: center;
   padding: 24px;
 }
@@ -674,7 +675,6 @@ img {
 
 .camera-controls {
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -682,23 +682,34 @@ img {
   display: none;
 }
 
+/* Controls float inside the camera feed */
 .camera-controls-main {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
   justify-content: center;
   align-items: center;
   gap: 22px;
+  padding: 20px 20px 22px;
+  background: linear-gradient(transparent, rgba(10, 18, 36, 0.55));
+  border-radius: 0 0 19px 19px;
 }
 
 .camera-icon {
-  min-width: 80px;
-  height: 48px;
-  padding: 0 18px;
-  border: 1px solid rgba(15, 23, 42, 0.15);
-  background: rgba(255, 255, 255, 0.92);
+  min-width: 76px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 999px;
   font-weight: 600;
   font-size: 0.88rem;
   cursor: pointer;
-  color: var(--text);
+  color: #fff;
   white-space: nowrap;
 }
 
@@ -706,15 +717,15 @@ img {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 8px solid rgba(255, 255, 255, 0.85);
+  border: 5px solid rgba(255, 255, 255, 0.9);
   background: radial-gradient(circle at center, #0ea05b 0%, #0a7a44 100%);
-  box-shadow: 0 14px 28px rgba(14, 160, 91, 0.35);
+  box-shadow: 0 8px 24px rgba(14, 160, 91, 0.45), 0 0 0 3px rgba(14, 160, 91, 0.2);
   cursor: pointer;
 }
 
 .camera-shutter:disabled,
 .camera-icon:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -792,71 +803,6 @@ img {
   flex-wrap: wrap;
 }
 
-.mode-toggle {
-  display: grid;
-  gap: 8px;
-}
-
-.mode-toggle-track {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  background: rgba(15, 23, 42, 0.08);
-  border-radius: 999px;
-  padding: 4px;
-  overflow: hidden;
-}
-
-.mode-toggle-indicator {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
-  height: calc(100% - 8px);
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
-  transition: transform 0.28s ease;
-  z-index: 0;
-}
-
-.mode-toggle-indicator.advanced {
-  transform: translateX(100%);
-}
-
-.mode-toggle-button {
-  position: relative;
-  z-index: 1;
-  border: 0;
-  background: transparent;
-  padding: 10px 16px;
-  font-weight: 700;
-  cursor: pointer;
-  color: var(--muted);
-}
-
-.mode-toggle-button.active {
-  color: var(--text);
-}
-
-.mode-toggle-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.mode-toggle-caption {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.mode-toast {
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.08);
-  color: var(--text);
-  font-weight: 600;
-}
 
 .sheet-backdrop {
   position: fixed;
@@ -1114,19 +1060,10 @@ img {
     height: 180px;
   }
 
-  .camera-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .camera-controls-main {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  /* Let camera fill the full card width */
+  /* Immersive full-bleed camera on mobile */
   .camera-panel {
     padding: 0;
+    gap: 0;
     border: none;
     background: transparent;
     border-radius: 0;
@@ -1134,12 +1071,21 @@ img {
   }
 
   .camera-shell {
-    border-radius: 16px;
-    min-height: 300px;
+    border-radius: 20px;
+    min-height: 0;
   }
 
+  /* Portrait camera fill — 3:4 matches phone orientation naturally */
   .camera-video {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 3 / 4;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .camera-controls-main {
+    gap: 28px;
+    padding: 22px 24px 26px;
+    border-radius: 0 0 19px 19px;
   }
 
   .brand-lockup h1 {
@@ -1151,6 +1097,15 @@ img {
     height: 42px;
     border-radius: 14px;
     font-size: 0.9rem;
+  }
+
+  /* Blend info button into the glass topbar on mobile */
+  .icon-button {
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border-color: rgba(15, 23, 42, 0.14);
+    font-size: 0.85rem;
   }
 
   .recognize-actions {

@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CameraCapture from '../components/CameraCapture';
 import ResultSheet from '../components/ResultSheet';
-import { ADVANCED_MODEL_URL, DEFAULT_MODEL_URL } from '../constants/recycle';
+import { ADVANCED_MODEL_URL } from '../constants/recycle';
 import { loadHistory, saveHistory } from '../lib/history';
 import { loadModel, resetModel, runPrediction } from '../lib/model';
 import type { PredictionRecord, PredictionResult } from '../types/recycle';
+
+const ADVANCED_LABELS = [
+  'Battery', 'Biological', 'Cardboard', 'Clothes',
+  'Glass', 'Metal', 'Paper', 'Plastic', 'Shoes', 'Trash',
+];
 
 function createPreviewUrl(file: File) {
   return URL.createObjectURL(file);
@@ -14,27 +19,17 @@ async function createHistoryThumbnail(file: File) {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const element = new Image();
     const objectUrl = URL.createObjectURL(file);
-    element.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(element);
-    };
-    element.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Invalid image file.'));
-    };
+    element.onload = () => { URL.revokeObjectURL(objectUrl); resolve(element); };
+    element.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Invalid image file.')); };
     element.src = objectUrl;
   });
 
   const canvas = document.createElement('canvas');
-  const size = 224;
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = 224;
+  canvas.height = 224;
   const context = canvas.getContext('2d');
-  if (!context) {
-    throw new Error('Canvas is not supported in this browser.');
-  }
-
-  context.drawImage(image, 0, 0, size, size);
+  if (!context) throw new Error('Canvas is not supported in this browser.');
+  context.drawImage(image, 0, 0, 224, 224);
   return canvas.toDataURL('image/jpeg', 0.8);
 }
 
@@ -43,8 +38,6 @@ export default function RecognitionPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [isPredicting, setIsPredicting] = useState(false);
-  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
-  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
   const [modelState, setModelState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [modelError, setModelError] = useState<string>('');
   const [cameraError, setCameraError] = useState<string>('');
@@ -53,71 +46,38 @@ export default function RecognitionPage() {
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const modeTimerRef = useRef<number | null>(null);
-
-  const advancedLabels = useMemo(
-    () => ['Battery', 'Biological', 'Cardboard', 'Clothes', 'Glass', 'Metal', 'Paper', 'Plastic', 'Shoes', 'Trash'],
-    []
-  );
 
   const hasFile = Boolean(file);
 
-  const activeModelUrl = isAdvancedMode ? ADVANCED_MODEL_URL : DEFAULT_MODEL_URL;
-
   useEffect(() => {
     let active = true;
-
     const initModel = async () => {
       setModelState('loading');
       setModelError('');
       setModelLoadMs(null);
-
       try {
-        const response = await fetch(activeModelUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          throw new Error(`Model file not found at ${activeModelUrl}.`);
-        }
-
+        const headResp = await fetch(ADVANCED_MODEL_URL, { method: 'HEAD' });
+        if (!headResp.ok) throw new Error(`Model file not found at ${ADVANCED_MODEL_URL}.`);
         const startedAt = performance.now();
-        await loadModel(activeModelUrl);
-        const loadDuration = performance.now() - startedAt;
-
+        await loadModel(ADVANCED_MODEL_URL);
         if (active) {
           setModelState('ready');
-          setModelError('');
-          setModelLoadMs(loadDuration);
+          setModelLoadMs(performance.now() - startedAt);
         }
       } catch (loadError) {
         if (active) {
-          const text = loadError instanceof Error ? loadError.message : 'Model load failed.';
           setModelState('error');
-          setModelError(text);
+          setModelError(loadError instanceof Error ? loadError.message : 'Model load failed.');
         }
       }
     };
-
     initModel();
-
-    return () => {
-      active = false;
-    };
-  }, [activeModelUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (modeTimerRef.current) {
-        window.clearTimeout(modeTimerRef.current);
-      }
-    };
+    return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
 
   const statusText = useMemo(() => {
     if (modelState === 'ready') return 'Model loaded';
@@ -131,91 +91,37 @@ export default function RecognitionPage() {
     setCameraError('');
   }
 
-  function handleFile(fileInput: File | null, fileSource: 'upload' | 'camera' = 'upload') {
-    resetFeedback();
-
-    if (!fileInput) {
-      setFile(null);
-      setPreviewUrl(null);
-      setResult(null);
-      setSource(null);
-      return;
-    }
-
-    if (!fileInput.type.startsWith('image/')) {
-      setError('Invalid image file.');
-      return;
-    }
-
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    setFile(fileInput);
-    setPreviewUrl(createPreviewUrl(fileInput));
-    setResult(null);
-    setSource(fileSource);
-  }
-
-  function handleModeChange(nextMode: boolean) {
-    if (isPredicting || isSwitchingMode || nextMode === isAdvancedMode) {
-      return;
-    }
-
-    setIsSwitchingMode(true);
-    setResult(null);
-    if (modeTimerRef.current) {
-      window.clearTimeout(modeTimerRef.current);
-    }
-    modeTimerRef.current = window.setTimeout(() => {
-      setIsAdvancedMode(nextMode);
-      setIsSwitchingMode(false);
-    }, 800);
-  }
-
-  function handleCloseResult() {
-    setResult(null);
-    handleFile(null);
-  }
-
-  async function handleRecognize() {
-    if (!file) {
-      setError('Please upload an image first.');
-      return;
-    }
-
+  async function recognizeFile(fileToRecognize: File, fileSource: 'upload' | 'camera') {
     if (modelState !== 'ready') {
       setError('Model is not loaded yet.');
       return;
     }
-
     setIsPredicting(true);
     resetFeedback();
-
     try {
-      const prediction = await runPrediction(file, activeModelUrl, 'wasm', isAdvancedMode ? advancedLabels : undefined);
-      if (isAdvancedMode) {
-        const topClasses = prediction.probabilities
-          .map((value, index) => ({
-            label: advancedLabels[index] ?? `Class ${index + 1}`,
-            confidence: value
-          }))
-          .sort((a, b) => b.confidence - a.confidence)
-          .slice(0, 5);
-        prediction.classLabels = advancedLabels;
-        prediction.topClasses = topClasses;
-      }
-      const historyPreview = await createHistoryThumbnail(file);
+      const prediction = await runPrediction(fileToRecognize, ADVANCED_MODEL_URL, 'wasm', ADVANCED_LABELS);
+      const topClasses = prediction.probabilities
+        .map((value, index) => ({
+          label: ADVANCED_LABELS[index] ?? `Class ${index + 1}`,
+          confidence: value,
+        }))
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, 5);
+      prediction.classLabels = ADVANCED_LABELS;
+      prediction.topClasses = topClasses;
+
+      const historyPreview = await createHistoryThumbnail(fileToRecognize);
       setResult(prediction);
       localStorage.setItem('sr-last-inference-ms', Math.round(prediction.inferenceMs).toString());
       setMessage(`Prediction finished in ${prediction.inferenceMs.toFixed(0)} ms.`);
+
       const record: PredictionRecord = {
         id: crypto.randomUUID(),
-        fileName: file.name,
+        fileName: fileToRecognize.name,
         previewUrl: historyPreview,
         createdAt: new Date().toISOString(),
-        source: source ?? 'upload',
-        ...prediction
+        source: fileSource,
+        ...prediction,
       };
       saveHistory([record, ...loadHistory()].slice(0, 20));
     } catch (predictionError) {
@@ -226,21 +132,52 @@ export default function RecognitionPage() {
     }
   }
 
+  function handleFile(fileInput: File | null, fileSource: 'upload' | 'camera' = 'upload') {
+    resetFeedback();
+    if (!fileInput) {
+      setFile(null);
+      setPreviewUrl(null);
+      setResult(null);
+      setSource(null);
+      return;
+    }
+    if (!fileInput.type.startsWith('image/')) {
+      setError('Invalid image file.');
+      return;
+    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(fileInput);
+    setPreviewUrl(createPreviewUrl(fileInput));
+    setResult(null);
+    setSource(fileSource);
+
+    // Auto-recognize immediately on camera capture
+    if (fileSource === 'camera' && modelState === 'ready') {
+      recognizeFile(fileInput, 'camera');
+    }
+  }
+
+  function handleRecognize() {
+    if (!file) { setError('Please upload an image first.'); return; }
+    recognizeFile(file, source ?? 'upload');
+  }
+
+  function handleCloseResult() {
+    setResult(null);
+    handleFile(null);
+  }
+
   function handleRetryModel() {
     resetModel();
     setModelState('loading');
     setModelError('');
     setModelLoadMs(null);
     const startedAt = performance.now();
-    loadModel(activeModelUrl)
-      .then(() => {
-        setModelState('ready');
-        setModelLoadMs(performance.now() - startedAt);
-      })
+    loadModel(ADVANCED_MODEL_URL)
+      .then(() => { setModelState('ready'); setModelLoadMs(performance.now() - startedAt); })
       .catch((loadError) => {
-        const text = loadError instanceof Error ? loadError.message : 'Model load failed.';
         setModelState('error');
-        setModelError(text);
+        setModelError(loadError instanceof Error ? loadError.message : 'Model load failed.');
       });
   }
 
@@ -271,37 +208,9 @@ export default function RecognitionPage() {
             id="image-input"
             type="file"
             accept="image/*"
-            capture="environment"
             className="hidden-input"
             onChange={(event) => handleFile(event.target.files?.[0] ?? null, 'upload')}
           />
-
-          <div className="mode-toggle">
-            <div className="mode-toggle-track">
-              <span className={`mode-toggle-indicator ${isAdvancedMode ? 'advanced' : 'basic'}`} />
-              <button
-                className={isAdvancedMode ? 'mode-toggle-button' : 'mode-toggle-button active'}
-                type="button"
-                onClick={() => handleModeChange(false)}
-                disabled={isPredicting || isSwitchingMode}
-              >
-                Basic
-              </button>
-              <button
-                className={isAdvancedMode ? 'mode-toggle-button active' : 'mode-toggle-button'}
-                type="button"
-                onClick={() => handleModeChange(true)}
-                disabled={isPredicting || isSwitchingMode}
-              >
-                Advanced
-              </button>
-            </div>
-            <p className="mode-toggle-caption">
-              {isAdvancedMode ? 'Deep Analysis' : 'Quick Scan'}
-            </p>
-          </div>
-
-          {isSwitchingMode ? <div className="mode-toast">Switching model...</div> : null}
 
           <CameraCapture
             onCapture={(capturedFile) => handleFile(capturedFile, 'camera')}
@@ -332,7 +241,12 @@ export default function RecognitionPage() {
           )}
 
           <div className="recognize-actions">
-            <button className="primary-button" type="button" onClick={handleRecognize} disabled={!hasFile || isPredicting}>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={handleRecognize}
+              disabled={!hasFile || isPredicting}
+            >
               {isPredicting ? 'Recognizing...' : 'Recognize'}
             </button>
           </div>
@@ -344,10 +258,7 @@ export default function RecognitionPage() {
           result={result}
           previewUrl={previewUrl}
           onClose={handleCloseResult}
-          onRetake={() => {
-            setResult(null);
-            handleFile(null);
-          }}
+          onRetake={() => { setResult(null); handleFile(null); }}
         />
       ) : null}
     </>

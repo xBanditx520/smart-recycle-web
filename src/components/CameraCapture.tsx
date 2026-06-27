@@ -172,6 +172,7 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
     <section className="camera-panel camera-main">
       <div className="camera-shell">
         <video ref={videoRef} playsInline muted className="camera-video" />
+
         {!isActive ? (
           <div className="camera-overlay">
             <div>
@@ -183,31 +184,31 @@ export default function CameraCapture({ onCapture, onError, onUploadClick, disab
             </div>
           </div>
         ) : null}
+
+        {/* Controls float inside the camera shell */}
+        <div className="camera-controls camera-controls-main">
+          <button className="camera-icon" type="button" onClick={onUploadClick} disabled={disabled}>
+            Upload
+          </button>
+          <button
+            className="camera-shutter"
+            type="button"
+            onClick={handleCapture}
+            disabled={disabled || status !== 'active'}
+            aria-label="Capture photo"
+          />
+          <button
+            className="camera-icon"
+            type="button"
+            onClick={handleSwitchCamera}
+            disabled={disabled || status !== 'active'}
+          >
+            Flip
+          </button>
+        </div>
       </div>
 
       <canvas ref={canvasRef} className="camera-canvas" />
-
-      <div className="camera-controls camera-controls-main">
-        <button className="camera-icon" type="button" onClick={onUploadClick} disabled={disabled}>
-          Upload
-        </button>
-        <button
-          className="camera-shutter"
-          type="button"
-          onClick={handleCapture}
-          disabled={disabled || status !== 'active'}
-          aria-label="Capture photo"
-        />
-        <button
-          className="camera-icon"
-          type="button"
-          onClick={handleSwitchCamera}
-          disabled={disabled || status !== 'active'}
-        >
-          Flip
-        </button>
-      </div>
-
       {errorMessage ? <p className="camera-meta">{errorMessage}</p> : null}
     </section>
   );
