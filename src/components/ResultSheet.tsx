@@ -50,11 +50,13 @@ interface ResultSheetProps {
 }
 
 type GeminiState = 'idle' | 'loading' | 'done' | 'error';
+type ContributeState = 'idle' | 'saved';
 
 export default function ResultSheet({ result, previewUrl, onClose, onRetake }: ResultSheetProps) {
   const [isClosing, setIsClosing] = useState(false);
   const [geminiState, setGeminiState] = useState<GeminiState>('idle');
   const [geminiResult, setGeminiResult] = useState<GeminiAnalysis | null>(null);
+  const [contributeState, setContributeState] = useState<ContributeState>('idle');
 
   const isBinary = result.label === 'recyclable' || result.label === 'non-recyclable';
   const isRecyclable = result.label === 'recyclable';
@@ -95,23 +97,21 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
       const analysis = await analyzeWithGemini(previewUrl);
       setGeminiResult(analysis);
       setGeminiState('done');
-      // Also save for retraining dataset
-      await saveFeedback({
-        imageUrl: previewUrl,
-        predictedLabel: result.label,
-        confidence: result.confidence,
-        mode: isBinary ? 'basic' : 'advanced',
-      }).catch(() => {});
     } catch {
       setGeminiState('error');
-      // Fallback: save to IndexedDB even without Gemini result
-      await saveFeedback({
-        imageUrl: previewUrl,
-        predictedLabel: result.label,
-        confidence: result.confidence,
-        mode: isBinary ? 'basic' : 'advanced',
-      }).catch(() => {});
     }
+  }
+
+  async function handleContribute() {
+    if (!previewUrl || contributeState === 'saved') return;
+    await saveFeedback({
+      imageUrl: previewUrl,
+      predictedLabel: result.label,
+      confidence: result.confidence,
+      geminiLabel: geminiResult?.category,
+      mode: 'advanced',
+    }).catch(() => {});
+    setContributeState('saved');
   }
 
   const showGeminiButton = GEMINI_AVAILABLE && previewUrl && geminiState === 'idle';
@@ -220,6 +220,25 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
             </p>
           ) : null}
         </div>
+
+        {previewUrl ? (
+          <div className="contribute-section">
+            {contributeState === 'idle' ? (
+              <button className="contribute-btn" type="button" onClick={handleContribute}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                Help improve the model — contribute this image
+              </button>
+            ) : (
+              <p className="contribute-saved">
+                ✓ Image saved locally for model improvement. Thank you!
+              </p>
+            )}
+          </div>
+        ) : null}
 
         <div className="overlay-actions">
           <button className="secondary-button" type="button" onClick={close}>

@@ -1812,6 +1812,43 @@ img {
   font-size: 0.95rem;
 }
 
+/* ── Dataset contribution button (ResultSheet) ── */
+
+.contribute-section {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.contribute-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px dashed rgba(14, 160, 91, 0.5);
+  color: #0ea05b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+}
+
+.contribute-btn:hover {
+  border-color: #0ea05b;
+  background: rgba(14, 160, 91, 0.06);
+}
+
+.contribute-saved {
+  font-size: 0.78rem;
+  color: #0ea05b;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ── overlay actions ── */
+
 .overlay-actions {
   display: flex;
   gap: 10px;

@@ -46,11 +46,11 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         </div>
 
         <div className="about-flow-card">
-          <h3>Classification modes</h3>
-          <ul className="flow-list">
-            <li><strong>Basic</strong> — Binary output: recyclable or non-recyclable. Fast and suited for quick household decisions.</li>
-            <li><strong>Advanced</strong> — 10-class output: Battery, Biological, Cardboard, Clothes, Glass, Metal, Paper, Plastic, Shoes, Trash. Composite detection flags mixed-material items.</li>
-          </ul>
+          <h3>Classification</h3>
+          <p>
+            10-class output: Battery, Biological, Cardboard, Clothes, Glass, Metal, Paper, Plastic, Shoes, Trash.
+            Composite detection automatically flags mixed-material items and provides split disposal guidance.
+          </p>
         </div>
 
         <div className="about-flow-card">

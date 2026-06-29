@@ -8,8 +8,12 @@ dist
 # Dataset files — backed up via OneDrive, do NOT commit to git
 data/
 data_classified/
+data_classified_v2/
 augmented_waste_classification/
 scripts/crop_valtest.mjs
+
+# WASM runtime files auto-copied from node_modules on dev server start
+public/ort-wasm/
 
 # Playwright screenshots
 camera-tall.png

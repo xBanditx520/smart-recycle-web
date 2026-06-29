@@ -1,16 +1,22 @@
-import * as ort from 'onnxruntime-web';
+import * as ort from 'onnxruntime-web/wasm';
 import { COMPOSITE_THRESHOLD, DEFAULT_MODEL_URL } from '../constants/recycle';
 import type { ModelInfo, PredictionClassScore, PredictionResult } from '../types/recycle';
 import { preprocessImageFile } from './preprocess';
 
-export type ExecutionProvider = 'wasm' | 'webgpu';
+export type ExecutionProvider = 'wasm';
 
 let modelPromise: Promise<ort.InferenceSession> | null = null;
 let modelInfo: ModelInfo | null = null;
 let currentProvider: ExecutionProvider | null = null;
 let currentModelUrl: string | null = null;
 
-ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
+// Dev: serve WASM from public/ort-wasm/ (copied from node_modules by vite.config.ts plugin).
+//      A custom middleware in vite.config.ts intercepts these requests before Vite's module
+//      pipeline so the ?import query doesn't trigger JS transformation of the .mjs files.
+// Prod: wasmPaths is not set — Vite bundles WASM into dist/assets/ with hashed names.
+if (import.meta.env.DEV) {
+  ort.env.wasm.wasmPaths = '/ort-wasm/';
+}
 
 function getLayoutFromShape(shape: readonly number[]) {
   if (shape.length === 4) {

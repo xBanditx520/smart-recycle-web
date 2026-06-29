@@ -16,6 +16,7 @@ export interface FeedbackEntry {
   imageDataUrl: string;
   predictedLabel: string;
   confidence: number;
+  geminiLabel?: string;
   mode: string;
   ts: number;
 }
@@ -34,6 +35,7 @@ export async function saveFeedback(opts: {
   imageUrl: string;
   predictedLabel: string;
   confidence: number;
+  geminiLabel?: string;
   mode: string;
 }): Promise<void> {
   const imageDataUrl = opts.imageUrl.startsWith('data:')
@@ -44,6 +46,7 @@ export async function saveFeedback(opts: {
     imageDataUrl,
     predictedLabel: opts.predictedLabel,
     confidence: opts.confidence,
+    ...(opts.geminiLabel ? { geminiLabel: opts.geminiLabel } : {}),
     mode: opts.mode,
     ts: Date.now(),
   };
