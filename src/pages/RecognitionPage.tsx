@@ -6,9 +6,10 @@ import { loadHistory, saveHistory } from '../lib/history';
 import { loadModel, resetModel, runPrediction } from '../lib/model';
 import type { PredictionRecord, PredictionResult } from '../types/recycle';
 
+// Must match alphabetical folder order from training (ImageFolder sorts A-Z)
 const ADVANCED_LABELS = [
-  'Battery', 'Biological', 'Cardboard', 'Clothes',
-  'Glass', 'Metal', 'Paper', 'Plastic', 'Shoes', 'Trash',
+  'Bulky_Furniture', 'E_Waste', 'Fabric_Shoes', 'General_Trash',
+  'Glass', 'Metal', 'Organic_Waste', 'Paper_Cardboard', 'Plastic',
 ];
 
 function createPreviewUrl(file: File) {

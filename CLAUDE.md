@@ -39,15 +39,17 @@ Basic mode was removed. The app always uses the **Advanced model** (10-class):
 
 | Model file | Classes |
 |---|---|
-| `public/advanced_waste_model.onnx` | Battery, Biological, Cardboard, Clothes, Glass, Metal, Paper, Plastic, Shoes, Trash |
+| `public/smart_recycle_v2.onnx` | Bulky_Furniture, E_Waste, Fabric_Shoes, General_Trash, Glass, Metal, Organic_Waste, Paper_Cardboard, Plastic |
 
-The model is a **single self-contained 6.1 MB file** (weights inlined, no external `.data` file). Do NOT export with external data — onnxruntime-web WASM cannot load split ONNX files.
+Class order is alphabetical (ImageFolder sort) — this is the logit output order the app relies on.
 
-Model URL defaults to `/advanced_waste_model.onnx`. Override with `VITE_ADVANCED_MODEL_URL` in `.env`.
+The model is a **single self-contained file** (weights inlined, no external `.data` file). Do NOT export with external data — onnxruntime-web WASM cannot load split ONNX files.
 
-**Test-set metrics (actual, retrained June 2026):**
-- Accuracy 98.1% · Precision 98.1% · Recall 98.0% · F1 98.0%
-- Weakest classes: Plastic (F1 95%) and Trash (F1 95%)
+Model URL defaults to `/smart_recycle_v2.onnx`. Override with `VITE_ADVANCED_MODEL_URL` in `.env`.
+
+**Test-set metrics (retrained June 2026, 9-class v2):**
+- Accuracy 97.7% · Precision 96.7% · Recall 97.4% · F1 97.0%
+- Weakest classes: Metal (F1 93.3%) and General_Trash (F1 94.3%)
 
 ### App structure
 

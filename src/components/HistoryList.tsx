@@ -1,3 +1,4 @@
+import { getUILabel } from '../constants/disposal';
 import type { PredictionRecord } from '../types/recycle';
 
 interface HistoryListProps {
@@ -35,7 +36,7 @@ export default function HistoryList({ records, onClear, onSelect, onDelete }: Hi
                     ? 'Recyclable'
                     : record.label === 'non-recyclable'
                       ? 'Non-recyclable'
-                      : record.label}
+                      : getUILabel(record.label)}
                 </strong>
                 <span>{Math.round(record.confidence * 100)}% confidence</span>
                 <small>{new Date(record.createdAt).toLocaleString()}</small>

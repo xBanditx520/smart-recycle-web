@@ -33,7 +33,7 @@ export default function AboutModal({ onClose }: AboutModalProps) {
           </div>
           <div className="about-info-card">
             <h3>Training data</h3>
-            <p>Augmented Waste Classification dataset. Techniques: random flip, rotation, colour jitter, and random crop to improve real-world generalisation.</p>
+            <p>79,000+ images across 9 waste categories, sourced and labelled locally. Augmentation: random flip, rotation, colour jitter, and random crop to improve real-world generalisation.</p>
           </div>
           <div className="about-info-card">
             <h3>Model input</h3>
@@ -48,8 +48,11 @@ export default function AboutModal({ onClose }: AboutModalProps) {
         <div className="about-flow-card">
           <h3>Classification</h3>
           <p>
-            10-class output: Battery, Biological, Cardboard, Clothes, Glass, Metal, Paper, Plastic, Shoes, Trash.
-            Composite detection automatically flags mixed-material items and provides split disposal guidance.
+            9-class output: Paper &amp; Cardboard, Plastics, Glass, Metals &amp; Aluminium, Organic / Food Waste,
+            E-Waste, Textiles &amp; Shoes, Bulky Waste, General Trash.
+            Each class is mapped to the correct Malaysian recycling bin colour (blue / brown / orange)
+            or flagged as a special collection item. Composite detection automatically identifies
+            mixed-material items and provides split disposal guidance.
           </p>
         </div>
 

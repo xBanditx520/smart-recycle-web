@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getDisposalTip, getRecyclability } from '../constants/disposal';
+import { getBinInfo, getDisposalTip, getRecyclability, getUILabel } from '../constants/disposal';
 import type { PredictionRecord } from '../types/recycle';
 
 interface HistoryDetailModalProps {
@@ -23,8 +23,9 @@ export default function HistoryDetailModal({ record, onClose, onDelete }: Histor
       ? 'Recyclable'
       : record.label === 'non-recyclable'
         ? 'Non-recyclable'
-        : record.label;
+        : getUILabel(record.label);
   const recyclability = !isBinary && !record.isComposite ? getRecyclability(record.label) : null;
+  const binInfo = !isBinary && !record.isComposite ? getBinInfo(record.label) : null;
 
   const disposalTip = (() => {
     if (record.isComposite && record.topClasses && record.topClasses.length >= 2) {
@@ -51,6 +52,12 @@ export default function HistoryDetailModal({ record, onClose, onDelete }: Histor
               {displayLabel}
               {recyclability ? <span className="recyclability-tag"> ({recyclability})</span> : null}
             </h3>
+            {binInfo ? (
+              <div className="bin-indicator">
+                <span className="bin-dot" style={{ background: binInfo.hex }} aria-hidden="true" />
+                <span>{binInfo.label}</span>
+              </div>
+            ) : null}
           </div>
           <button className="secondary-button" type="button" onClick={onClose}>
             Close

@@ -1,46 +1,68 @@
 const DISPOSAL_TIPS: Record<string, string> = {
-  Battery:
-    'Drop at an e-waste collection point (Giant, AEON, or your local council scheduled collection). Never throw in a regular bin — batteries contain toxic heavy metals.',
-  Biological:
-    'Compost vegetable and food scraps if possible. Otherwise, seal in a bag and dispose as general waste. Never mix with recyclables.',
-  Cardboard:
-    'Flatten before placing in the blue recycling bin (tong kitar semula). Remove tape and plastic windows. Wet or heavily soiled cardboard goes to general waste.',
-  Clothes:
-    'Wearable items in good condition can be donated to Salvation Army, Junk Trunk, or charity bins. H&M and Uniqlo stores also accept worn clothing for recycling. Torn or heavily stained clothing cannot be donated — look for a textile recycling bin, or dispose as general waste if none is available.',
-  Glass:
-    'Rinse clean. Glass bottles and jars are accepted at most Malaysian recycling centres. Wrap any broken glass in newspaper before disposal for safety.',
-  Metal:
-    'Rinse and crush food and drink cans before recycling — aluminium cans have high resale value, always recycle them. Aerosol cans must be completely empty before recycling; if still pressurised, treat as hazardous waste instead.',
-  Paper:
-    'Clean, dry paper (newspaper, office paper, envelopes without plastic windows) goes straight into the blue recycling bin. Tissue, paper towels, and food-soiled paper cannot be recycled — these go to general waste.',
+  Paper_Cardboard:
+    'Flatten cardboard boxes and keep paper clean and dry before placing in the blue recycling bin (tong kitar semula). Remove plastic tape, staples, and plastic windows. Tissue, paper towels, and food-soiled paper/cardboard cannot be recycled — dispose as general waste.',
   Plastic:
-    'Check what kind of plastic it is. Rigid plastic (bottles, containers) with resin code 1 (PET) or 2 (HDPE) goes into the blue recycling bin — rinse first and remove caps if possible. Soft plastic (bags, wrappers, cling film) is rejected by most kerbside recycling; reuse it, or look for a dedicated soft-plastic drop-off bin at major supermarkets.',
-  Shoes:
-    'Shoes are made from rubber, leather, textile, and adhesive composites that cannot be separated by standard recycling machinery. Donate wearable pairs in good condition to charity bins, or return them via Adidas/Nike in-store take-back programs. Heavily worn or damaged shoes should be disposed as general waste.',
-  Trash:
-    'Dispose as general waste. Before discarding, check if any metal or clean plastic parts can be separated for recycling.',
-  recyclable:
-    'Place in the blue recycling bin (tong kitar semula). Ensure the item is clean and dry — contaminated recyclables end up in landfill.',
-  'non-recyclable':
-    'Dispose in the general waste bin. If unsure about an item, contact your local council (pihak berkuasa tempatan) for guidance.',
+    'Check the resin code. Rigid plastic (bottles, containers) marked 1 (PET) or 2 (HDPE) goes into the blue recycling bin — rinse first and remove caps if possible. Soft plastic (bags, wrappers, cling film) is not accepted by most kerbside recycling; reuse or look for a soft-plastic drop-off bin at major supermarkets.',
+  Glass:
+    'Rinse clean. Glass bottles and jars are accepted at most Malaysian recycling centres. Wrap any broken glass in newspaper before disposal for safety. Do not mix with other recyclables if broken.',
+  Metal:
+    'Rinse and crush food and drink cans before recycling — aluminium cans have high resale value, always recycle them. Aerosol cans must be completely empty before recycling; if still pressurised, treat as hazardous waste.',
+  Fabric_Shoes:
+    'Wearable clothes and shoes in good condition can be donated to Salvation Army, Junk Trunk, or Kloth Cares drop-off bins. H&M and Uniqlo stores accept worn clothing for textile recycling. Torn, heavily stained, or damaged items that cannot be donated should go to general waste.',
+  Bulky_Furniture:
+    'Large non-electrical furniture (sofas, tables, wardrobes, bed frames) cannot go in the regular bin. Schedule a bulky waste pickup with Alam Flora (1-800-88-1199) or your local council. Some items in good condition may be accepted by second-hand shops or NGOs.',
+  E_Waste:
+    'Anything with a plug, battery, or circuit board must NOT go in the regular bin — it contains toxic materials. Drop off at an e-waste collection point: AEON, Giant, and many local councils run scheduled e-waste drives. Larger appliances (fridges, TVs) can be returned via manufacturer take-back programmes or scheduled for collection by Alam Flora.',
+  Organic_Waste:
+    'Compost vegetable peels, food scraps, and garden waste if possible — it reduces methane from landfill. Otherwise, seal in a bag and dispose as general waste. Never mix with recyclables as food contamination ruins entire batches of recyclable material.',
+  General_Trash:
+    'Dispose in the general waste bin. Before discarding, check if any clean metal, glass, or plastic parts can be separated for recycling. Composite items (mixed materials that cannot be separated) such as styrofoam, heavily soiled packaging, and multilayer pouches go here.',
   'Composite Item':
-    'This item contains mixed materials. Separate the components where possible and dispose of each part according to its own category.'
+    'This item appears to contain mixed materials. Separate the components where possible and dispose of each part according to its own category.',
 };
 
-// Practical recycling-stream classification for each of the 10 advanced-mode classes.
-// "Recyclable" = accepted in standard kerbside/blue-bin recycling.
-// "Non-recyclable" = needs special handling (e-waste, compost) or goes to general waste.
 const CLASS_RECYCLABILITY: Record<string, 'Recyclable' | 'Non-recyclable'> = {
-  Battery: 'Non-recyclable',
-  Biological: 'Non-recyclable',
-  Cardboard: 'Recyclable',
-  Clothes: 'Recyclable',
-  Glass: 'Recyclable',
-  Metal: 'Recyclable',
-  Paper: 'Recyclable',
-  Plastic: 'Recyclable',
-  Shoes: 'Non-recyclable',
-  Trash: 'Non-recyclable'
+  Paper_Cardboard:  'Recyclable',
+  Plastic:          'Recyclable',
+  Glass:            'Recyclable',
+  Metal:            'Recyclable',
+  Fabric_Shoes:     'Non-recyclable',
+  Bulky_Furniture:  'Non-recyclable',
+  E_Waste:          'Non-recyclable',
+  Organic_Waste:    'Non-recyclable',
+  General_Trash:    'Non-recyclable',
+};
+
+// User-friendly display names shown in the UI (model uses underscore class names internally)
+const UI_LABELS: Record<string, string> = {
+  Paper_Cardboard: 'Paper & Cardboard',
+  Plastic:         'Plastics',
+  Glass:           'Glass',
+  Metal:           'Metals & Aluminium',
+  Fabric_Shoes:    'Textiles & Shoes',
+  Bulky_Furniture: 'Bulky Waste',
+  E_Waste:         'E-Waste',
+  Organic_Waste:   'Organic / Food Waste',
+  General_Trash:   'General Trash',
+};
+
+export interface BinInfo {
+  hex: string;    // bin color
+  label: string;  // bin name shown to user
+}
+
+// Malaysian 3-bin system: Blue (paper), Brown (glass), Orange (plastic+metal)
+// Special categories use purple to signal they need a separate drop-off point
+const BIN_INFO: Record<string, BinInfo> = {
+  Paper_Cardboard: { hex: '#3b82f6', label: 'Blue Bin' },
+  Plastic:         { hex: '#f97316', label: 'Orange Bin' },
+  Metal:           { hex: '#f97316', label: 'Orange Bin' },
+  Glass:           { hex: '#92400e', label: 'Brown Bin' },
+  Organic_Waste:   { hex: '#374151', label: 'General Waste Bin' },
+  General_Trash:   { hex: '#374151', label: 'General Waste Bin' },
+  E_Waste:         { hex: '#7c3aed', label: 'E-Waste Collection Point' },
+  Fabric_Shoes:    { hex: '#7c3aed', label: 'Donation / Drop-off' },
+  Bulky_Furniture: { hex: '#7c3aed', label: 'Council Bulky Pickup' },
 };
 
 export function getDisposalTip(label: string): string {
@@ -49,4 +71,12 @@ export function getDisposalTip(label: string): string {
 
 export function getRecyclability(label: string): 'Recyclable' | 'Non-recyclable' | null {
   return CLASS_RECYCLABILITY[label] ?? null;
+}
+
+export function getUILabel(label: string): string {
+  return UI_LABELS[label] ?? label.replace(/_/g, ' ');
+}
+
+export function getBinInfo(label: string): BinInfo | null {
+  return BIN_INFO[label] ?? null;
 }

@@ -1766,6 +1766,29 @@ img {
   text-overflow: ellipsis;
 }
 
+/* ── Bin colour indicator ── */
+
+.bin-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  width: fit-content;
+}
+
+.bin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .recyclability-tag {
   font-size: 0.7rem;
   font-weight: 500;

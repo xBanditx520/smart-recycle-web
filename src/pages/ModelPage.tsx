@@ -1,41 +1,25 @@
 import { useEffect, useState } from 'react';
+import { getUILabel } from '../constants/disposal';
 import { GEMINI_AVAILABLE } from '../lib/gemini';
 import { clearFeedback, exportFeedback, getFeedbackCount } from '../lib/feedback';
 
-const CM_CLASSES = ['Battery','Biological','Cardboard','Clothes','Glass','Metal','Paper','Plastic','Shoes','Trash'];
-const CM_SHORT   = ['Bat',    'Bio',       'Card',     'Clo',   'Gls',  'Met',  'Pap',  'Pla',   'Sho',  'Tra' ];
-
 const CLASS_METRICS: Record<string, { p: number; r: number; f1: number }> = {
-  Battery:    { p: 1.00, r: 0.99, f1: 0.99 },
-  Biological: { p: 0.99, r: 1.00, f1: 1.00 },
-  Cardboard:  { p: 1.00, r: 0.99, f1: 0.99 },
-  Clothes:    { p: 0.99, r: 0.98, f1: 0.99 },
-  Glass:      { p: 0.98, r: 0.99, f1: 0.98 },
-  Metal:      { p: 0.98, r: 0.98, f1: 0.98 },
-  Paper:      { p: 0.98, r: 0.99, f1: 0.99 },
-  Plastic:    { p: 0.94, r: 0.96, f1: 0.95 },
-  Shoes:      { p: 0.99, r: 1.00, f1: 0.99 },
-  Trash:      { p: 0.97, r: 0.94, f1: 0.95 },
+  Bulky_Furniture:  { p: 0.975, r: 0.979, f1: 0.977 },
+  E_Waste:          { p: 0.985, r: 0.993, f1: 0.989 },
+  Fabric_Shoes:     { p: 0.976, r: 0.991, f1: 0.983 },
+  General_Trash:    { p: 0.934, r: 0.951, f1: 0.943 },
+  Glass:            { p: 0.991, r: 0.984, f1: 0.987 },
+  Metal:            { p: 0.944, r: 0.922, f1: 0.933 },
+  Organic_Waste:    { p: 0.977, r: 0.985, f1: 0.981 },
+  Paper_Cardboard:  { p: 0.929, r: 0.980, f1: 0.954 },
+  Plastic:          { p: 0.992, r: 0.978, f1: 0.985 },
 };
 
-// For line chart — alphabetical order (= CM_CLASSES order)
-const CHART_DATA = CM_CLASSES.map((name, i) => ({
-  name,
-  short: CM_SHORT[i],
-  ...CLASS_METRICS[name],
-}));
+const SORTED_CLASSES = Object.entries(CLASS_METRICS)
+  .map(([name, m]) => ({ name, ...m }))
+  .sort((a, b) => b.f1 - a.f1 || b.p - a.p);
 
-// For F1 bar chart — sorted descending
-const SORTED_CLASSES = [...CHART_DATA].sort((a, b) => b.f1 - a.f1 || b.p - a.p);
-
-const LINE_COLORS = { p: '#3b82f6', r: '#06b6d4', f1: '#0ea05b' } as const;
-const Y_MIN = 0.82, Y_MAX = 1.01;
-
-function barColor(f1: number) {
-  if (f1 >= 0.98) return '#0ea05b';
-  if (f1 >= 0.96) return '#22a6b3';
-  return '#eab308';
-}
+const METRIC_COLORS = { p: '#3b82f6', r: '#06b6d4', f1: '#0ea05b' } as const;
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
@@ -46,95 +30,89 @@ function MetricCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PerformanceLineChart() {
-  const W = 300, H = 160;
-  const pl = 36, pr = 8, pt = 14, pb = 36;
-  const cw = W - pl - pr;
-  const ch = H - pt - pb;
+function PerformanceGroupedChart() {
+  const W = 380;
+  const pl = 118; // left padding for class labels
+  const pr = 38;  // right padding for value text
+  const trackW = W - pl - pr;
+  const barH = 5;
+  const barGap = 2;
+  const groupH = 3 * barH + 2 * barGap; // 19px per class group
+  const classPad = 9;
+  const pt = 20; // top padding for tick labels
+  const pb = 8;
+  const totalH = pt + SORTED_CLASSES.length * (groupH + classPad) - classPad + pb;
 
-  function xp(i: number) { return pl + (i / (CHART_DATA.length - 1)) * cw; }
-  function yp(v: number) { return pt + (1 - (v - Y_MIN) / (Y_MAX - Y_MIN)) * ch; }
+  const X_MIN = 0.88;
+  const X_MAX = 1.005;
 
-  const yTicks = [0.85, 0.90, 0.95, 1.00];
+  function xp(v: number) {
+    return pl + ((v - X_MIN) / (X_MAX - X_MIN)) * trackW;
+  }
+
+  const ticks = [0.88, 0.92, 0.96, 1.00];
+  const metrics: Array<{ key: keyof typeof METRIC_COLORS; color: string }> = [
+    { key: 'p',  color: METRIC_COLORS.p },
+    { key: 'r',  color: METRIC_COLORS.r },
+    { key: 'f1', color: METRIC_COLORS.f1 },
+  ];
 
   return (
     <svg
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={`0 0 ${W} ${totalH}`}
       width="100%"
-      aria-label="Per-class precision, recall and F1 score line chart"
+      aria-label="Per-class precision, recall and F1 grouped bar chart"
     >
-      {/* Grid lines */}
-      {yTicks.map(v => (
+      {/* Vertical grid lines + tick labels */}
+      {ticks.map(v => (
         <g key={v}>
           <line
-            x1={pl} y1={yp(v)} x2={W - pr} y2={yp(v)}
-            stroke="#e2e8f0" strokeWidth="0.6" strokeDasharray="3,3"
+            x1={xp(v)} y1={pt - 5}
+            x2={xp(v)} y2={totalH - pb}
+            stroke="#e2e8f0" strokeWidth="0.6"
           />
-          <text
-            x={pl - 3} y={yp(v)}
-            textAnchor="end" dominantBaseline="middle"
-            fontSize="7.5" fill="#94a3b8"
-          >
+          <text x={xp(v)} y={pt - 7} textAnchor="middle" fontSize="7" fill="#94a3b8">
             {(v * 100).toFixed(0)}%
           </text>
         </g>
       ))}
 
-      {/* Lines */}
-      {(['p', 'r', 'f1'] as const).map(k => {
-        const pts = CHART_DATA
-          .map((d, i) => `${xp(i).toFixed(1)},${yp(d[k]).toFixed(1)}`)
-          .join(' ');
+      {/* Baseline */}
+      <line x1={pl} y1={pt - 5} x2={pl} y2={totalH - pb} stroke="#cbd5e1" strokeWidth="0.7" />
+
+      {/* Class groups */}
+      {SORTED_CLASSES.map((cls, i) => {
+        const y0 = pt + i * (groupH + classPad);
         return (
-          <polyline
-            key={k}
-            points={pts}
-            fill="none"
-            stroke={LINE_COLORS[k]}
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
+          <g key={cls.name}>
+            <text
+              x={pl - 6} y={y0 + groupH / 2}
+              textAnchor="end" dominantBaseline="middle"
+              fontSize="8" fill="#374151" fontWeight="500"
+            >
+              {getUILabel(cls.name)}
+            </text>
+
+            {metrics.map((m, j) => {
+              const barY = y0 + j * (barH + barGap);
+              const fillW = Math.max(0, xp(cls[m.key]) - pl);
+              const valText = (cls[m.key] * 100).toFixed(1);
+              return (
+                <g key={m.key}>
+                  <rect x={pl} y={barY} width={trackW} height={barH} fill="#f1f5f9" rx="2" />
+                  <rect x={pl} y={barY} width={fillW} height={barH} fill={m.color} rx="2" opacity="0.88" />
+                  <text
+                    x={pl + fillW + 3} y={barY + barH / 2}
+                    dominantBaseline="middle" fontSize="6.5" fill="#64748b"
+                  >
+                    {valText}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
         );
       })}
-
-      {/* Dots */}
-      {(['p', 'r', 'f1'] as const).map(k =>
-        CHART_DATA.map((d, i) => (
-          <circle
-            key={`${k}-${i}`}
-            cx={xp(i)} cy={yp(d[k])}
-            r="2.5"
-            fill={LINE_COLORS[k]}
-          />
-        ))
-      )}
-
-      {/* X-axis labels */}
-      {CHART_DATA.map((d, i) => (
-        <text
-          key={d.short}
-          x={xp(i)} y={H - pb + 12}
-          textAnchor="middle"
-          fontSize="7" fill="#64748b"
-        >
-          {d.short}
-        </text>
-      ))}
-
-      {/* Axis labels */}
-      <text
-        x={W / 2} y={H - 2}
-        textAnchor="middle" fontSize="6.5" fill="#94a3b8"
-      >
-        Class
-      </text>
-      <text
-        transform={`translate(9,${pt + ch / 2}) rotate(-90)`}
-        textAnchor="middle" fontSize="6.5" fill="#94a3b8"
-      >
-        Score
-      </text>
     </svg>
   );
 }
@@ -165,7 +143,7 @@ export default function ModelPage() {
         </p>
         <div className="model-dataset-row">
           <span>Training dataset</span>
-          <strong>40,000+ images · 10 classes</strong>
+          <strong>79,000+ images · 9 classes</strong>
         </div>
       </div>
 
@@ -174,65 +152,42 @@ export default function ModelPage() {
         <div className="model-block-head">
           <div>
             <p className="section-label">Advanced Mode</p>
-            <h3>10-Class Classification</h3>
+            <h3>9-Class Classification</h3>
             <p className="model-block-desc">
-              Identifies waste material type for precise disposal guidance.
+              Identifies waste category and recommends the correct Malaysian disposal action.
             </p>
           </div>
-          <span className="model-mode-badge advanced">10-class</span>
+          <span className="model-mode-badge advanced">9-class</span>
         </div>
 
         <div className="metric-grid">
-          <MetricCard label="Accuracy"  value="98.1%" />
-          <MetricCard label="Precision" value="98.1%" />
-          <MetricCard label="Recall"    value="98.0%" />
-          <MetricCard label="F1 Score"  value="98.0%" />
+          <MetricCard label="Accuracy"  value="97.7%" />
+          <MetricCard label="Precision" value="96.7%" />
+          <MetricCard label="Recall"    value="97.4%" />
+          <MetricCard label="F1 Score"  value="97.0%" />
         </div>
 
-        {/* Per-class F1 bars */}
+        {/* Per-class P / R / F1 grouped horizontal bar chart */}
         <div className="model-card">
-          <h4 className="model-card-title">Per-class F1 Score</h4>
-          <div className="class-f1-bars">
-            {SORTED_CLASSES.map(cls => (
-              <div key={cls.name} className="class-f1-row">
-                <span className="class-f1-name">{cls.name}</span>
-                <div className="class-f1-track">
-                  <div
-                    className="class-f1-fill"
-                    style={{ width: `${cls.f1 * 100}%`, background: barColor(cls.f1) }}
-                  />
-                </div>
-                <strong className="class-f1-value">{(cls.f1 * 100).toFixed(0)}%</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* P / R / F1 line chart */}
-        <div className="model-card">
-          <h4 className="model-card-title">Precision · Recall · F1 per Class</h4>
-          <PerformanceLineChart />
-          <div className="cm-legend" style={{ marginTop: 10 }}>
+          <h4 className="model-card-title">Per-class Performance (sorted by F1)</h4>
+          <PerformanceGroupedChart />
+          <div className="cm-legend" style={{ marginTop: 12 }}>
             <span>
-              <span className="cm-legend-swatch" style={{ background: LINE_COLORS.p }} />
+              <span className="cm-legend-swatch" style={{ background: METRIC_COLORS.p }} />
               Precision
             </span>
             <span>
-              <span className="cm-legend-swatch" style={{ background: LINE_COLORS.r }} />
+              <span className="cm-legend-swatch" style={{ background: METRIC_COLORS.r }} />
               Recall
             </span>
             <span>
-              <span className="cm-legend-swatch" style={{ background: LINE_COLORS.f1 }} />
+              <span className="cm-legend-swatch" style={{ background: METRIC_COLORS.f1 }} />
               F1
             </span>
           </div>
-          <p className="cm-abbrev-note" style={{ marginTop: 8 }}>
-            Bat=Battery · Bio=Biological · Card=Cardboard · Clo=Clothes · Gls=Glass ·
-            Met=Metal · Pap=Paper · Pla=Plastic · Sho=Shoes · Tra=Trash
-          </p>
-          <p className="confusion-intro" style={{ marginTop: 6 }}>
-            Plastic and Trash are the hardest classes (F1 ≈ 95%). All other classes
-            achieve F1 ≥ 98%, with Biological reaching near-perfect at 99.5%.
+          <p className="confusion-intro" style={{ marginTop: 8 }}>
+            Metal (F1 93.3%) and General Trash (F1 94.3%) are the hardest classes.
+            E-Waste reaches the highest F1 at 98.9%.
           </p>
         </div>
       </div>

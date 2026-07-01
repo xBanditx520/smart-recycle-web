@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getDisposalTip, getRecyclability } from '../constants/disposal';
+import { getBinInfo, getDisposalTip, getRecyclability, getUILabel } from '../constants/disposal';
 import { saveFeedback } from '../lib/feedback';
 import { GEMINI_AVAILABLE, analyzeWithGemini } from '../lib/gemini';
 import type { GeminiAnalysis } from '../lib/gemini';
@@ -71,9 +71,10 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
       ? isRecyclable
         ? 'Recyclable'
         : 'Non-recyclable'
-      : result.label;
+      : getUILabel(result.label);
 
   const primaryRecyclability = !isBinary && !isComposite ? getRecyclability(result.label) : null;
+  const binInfo = !isBinary && !isComposite ? getBinInfo(result.label) : null;
 
   const disposalTip =
     isComposite && primaryClass && secondaryClass
@@ -147,9 +148,15 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
               {displayLabel}
               {primaryRecyclability ? <span className="recyclability-tag">({primaryRecyclability})</span> : null}
             </h2>
+            {binInfo ? (
+              <div className="bin-indicator">
+                <span className="bin-dot" style={{ background: binInfo.hex }} aria-hidden="true" />
+                <span>{binInfo.label}</span>
+              </div>
+            ) : null}
             {isComposite && primaryClass && secondaryClass ? (
               <p className="overlay-sub">
-                {primaryClass.label} + {secondaryClass.label}
+                {getUILabel(primaryClass.label)} + {getUILabel(secondaryClass.label)}
               </p>
             ) : null}
           </div>
@@ -164,7 +171,7 @@ export default function ResultSheet({ result, previewUrl, onClose, onRetake }: R
               return (
                 <div key={item.label} className="overlay-class-row">
                   <span>
-                    {item.label}
+                    {getUILabel(item.label)}
                     {recyclability ? <span className="recyclability-tag">({recyclability})</span> : null}
                   </span>
                   <div className="overlay-class-bar-track">
